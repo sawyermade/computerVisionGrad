@@ -1,7 +1,7 @@
 import numpy as np 
 import imageio, os
 
-DEBUG = True
+DEBUG = False
 
 class maFrignImg:
 	# Init stuff
@@ -248,7 +248,7 @@ def checkOutDir(path):
 	outDir = os.path.join(*outDir)
 	if not os.path.exists(outDir): os.makedirs(outDir)
 
-if __name__ == '__main__':
+def main():
 	# Test 1
 	test = imgRead('images/test-00.jpg')
 	xyz = convertXYZ(test)
@@ -259,7 +259,10 @@ if __name__ == '__main__':
 	# Test 2
 	test = maFrignImg('images/test-00.jpg')
 	test.rgb2lab()
-	print(test.rgb[0,0])
-	print(test.lab[0,0])
 	test.save('output/test/test-00-lab.png', test.labd)
 	test.save('output/test/test-00.png')
+
+
+if __name__ == '__main__':
+	DEBUG = True
+	main()
