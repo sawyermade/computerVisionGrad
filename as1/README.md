@@ -15,3 +15,7 @@ Ex 5.5: Mean shift Develop a mean-shift segmentation algorithm for color images 
 
 6. (Optional) Mean shift divides the kernel density function estimate by the local weighting to obtain a step size that is guaranteed to converge but may be slow. Use an alternative step size estimation algorithm from the optimization literature to see if you can make the algorithm converge faster.
 ```
+## Test:
+```
+$ python3 myHelper.py
+```
