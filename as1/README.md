@@ -1,4 +1,15 @@
-# Assignment 1 
+# Assignment 1
+
+## Install:
+```
+$ python3 -m pip install -r requirements.txt --user
+``` 
+
+## Test:
+```
+$ python3 myHelper.py
+```
+
 ## Description:
 ```
 Ex 5.5: Mean shift Develop a mean-shift segmentation algorithm for color images (Co-maniciu and Meer 2002).
@@ -14,8 +25,4 @@ Ex 5.5: Mean shift Develop a mean-shift segmentation algorithm for color images 
 5. (Optional) Use a random subset of the pixels as starting points and find which component each unlabeled pixel belongs to, either by finding its nearest neighbor or by iterating the mean shift until it finds a neighboring track of mean-shift values. Describe the data structures you use to make this efficient.
 
 6. (Optional) Mean shift divides the kernel density function estimate by the local weighting to obtain a step size that is guaranteed to converge but may be slow. Use an alternative step size estimation algorithm from the optimization literature to see if you can make the algorithm converge faster.
-```
-## Test:
-```
-$ python3 myHelper.py
 ```
