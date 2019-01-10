@@ -1,6 +1,6 @@
 # Assignment 1
 
-## Install:
+## Install Required Modules:
 ```
 $ python3 -m pip install -r requirements.txt --user
 ``` 
