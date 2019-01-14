@@ -1,5 +1,5 @@
 import numpy as np 
-import imageio, os
+import imageio, os, math, sys
 from tqdm import tqdm
 
 DEBUG = False
@@ -15,6 +15,7 @@ class maFrignImg:
 		self.labd = None
 		self.xyz = None
 		self.backup = None
+		self.meanshift = None
 
 		if self.inPath:
 			self.rgb = imageio.imread(inPath)
@@ -224,6 +225,70 @@ class maFrignImg:
 		outDir = os.path.join(*outDir)
 		if not os.path.exists(outDir): os.makedirs(outDir)
 
+	def hc(self, x, xi, hc):
+		if abs(x-xi) <= 3*hc: return True
+		else: return False
+
+	def hd(self, x, xi, hd):
+		xximag = x - xi 
+		xximag = math.sqrt(np.matmul(xximag, xximag.T))
+
+		if xximag <= 3*hd: return True
+		else: return False
+
+	def meanShift(self, hc, hd, m=None, im=None, steps=10, grayScale=False):
+		# Default using labd
+		if im == None:
+			im = self.labd
+
+		if grayScale:
+			im = self.rgb
+
+		# Sets up info
+		rows, cols, chans = im.shape
+		ogIm = np.copy(im)
+		newIm = np.copy(im)
+
+		# Goes through pixels
+		for step in tqdm(range(steps)):
+			for i in tqdm(range(rows)):
+				for j in range(cols):
+					count, meanSum, total = 0, 0, 0
+
+					if grayScale:
+						x = ogIm[i,j][0]
+					else:
+						x = ogIm[i,j]
+
+					for k in range(rows):
+						for l in range(cols):
+							if grayScale:
+								xi = ogIm[i,j][0]
+							else:
+								xi = ogIm[i,j]
+
+							if self.hc(x, xi, hc) and self.hd(np.array([i,j]), np.array([k,l]), hd):
+								count += 1
+								
+								if grayScale:
+									xxivec = np.array([x, i, j]) - np.array([xi, k, l]) 
+									xxivec = np.matmul(xxivec, xxivec.T)
+									exp = math.exp(-0.5*xxivec/hc**2) + math.exp(-0.5*xxivec/hd**2)
+
+									meanSum += xxivec*exp
+									total += exp
+
+					if grayScale:
+						newIm[i,j] = meanSum/total
+
+			temp = ogIm
+			ogIm = newIm
+			newIm = temp
+
+		# Return
+		self.meanshift = ogIm
+		return True
+
 def convertXYZ(im):
 	# Creates empty matrix
 	rows, cols, channels = im.shape
@@ -344,11 +409,17 @@ def main():
 	# test.save('output/test/test-01-lab.png', test.labd)
 	# test.save('output/test/test-01.png')
 
-	# Test 3
-	test = maFrignImg('images/test-01.jpg')
-	test.rgb2lab()
-	test.lab2rgb()
-	test.save('output/test/test-01-lab2rgb.png')
+	# # Test 3
+	# test = maFrignImg('images/test-01.jpg')
+	# test.rgb2lab()
+	# test.lab2rgb()
+	# test.save('output/test/test-01-lab2rgb.png')
+
+	# Test 4
+	#def meanShift(self, hc, hd, m=None, im=None, steps=10, grayScale=False):
+	test = maFrignImg('{}'.format(sys.argv[1]))
+	test.meanShift(7, 8, 40, steps=5, grayScale=True)
+	test.save('{}'.format(sys.argv[2]))
 
 if __name__ == '__main__':
 	DEBUG = True
