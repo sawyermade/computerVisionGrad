@@ -259,7 +259,7 @@ class maFrignImg:
 		if grayScale:
 			newIm[i,j] = meanSum/total
 
-	def meanShift(self, hc, hd, m=None, im=None, steps=10, grayScale=False):
+	def meanShift(self, hc, hd, m=None, im=None, steps=10, grayScale=False, poolNum=os.cpu_count()):
 		# Default using labd
 		if im == None:
 			im = self.labd
@@ -273,9 +273,6 @@ class maFrignImg:
 		ogIm = ogIm.astype(float)
 		newIm = np.copy(im)
 		newIm = newIm.astype(float)
-
-		# Pool
-		poolNum = os.cpu_count()	
 
 		# Goes through pixels
 		for step in tqdm(range(steps)):
@@ -468,7 +465,7 @@ def main():
 	#def meanShift(self, hc, hd, m=None, im=None, steps=10, grayScale=False):
 	test = maFrignImg('{}'.format(sys.argv[1]))
 	test.meanShift(7, 8, 40, steps=5, grayScale=True)
-	test.save('{}'.format(sys.argv[2]))
+	test.save('{}'.format(sys.argv[2]), test.meanshift)
 
 if __name__ == '__main__':
 	DEBUG = True
