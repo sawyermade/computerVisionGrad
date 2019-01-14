@@ -276,6 +276,7 @@ class maFrignImg:
 
 		# Pool
 		poolNum = 4
+		p = Pool(poolNum)
 
 		# Goes through pixels
 		for step in tqdm(range(steps)):
@@ -294,10 +295,8 @@ class maFrignImg:
 					# 	for l in range(cols):
 					# 		#def threadMS(self, x, rows, cols, ogIm, newIm, hc, hd, grayScale):
 					# 		threadParmList.append([x, rows, cols, ogIm, newIm, hc, hd, grayScale])
-					with Pool(rows*cols) as p:
-						print(p.apply_async(self.threadMS, [x, rows, cols, ogIm, newIm, hc, hd, grayScale]))
-						pool.close()
-						pool.join()
+
+					print(p.apply_async(self.threadMS, [x, rows, cols, ogIm, newIm, hc, hd, grayScale]))
 
 
 					# for k in range(rows):
@@ -325,6 +324,10 @@ class maFrignImg:
 					# if grayScale:
 					# 	newIm[i,j] = meanSum/total
 					# 	# print(newIm[i,j])
+
+			# Pool wait
+			pool.close()
+			pool.join()
 
 			# One iter complete			
 			temp = ogIm
