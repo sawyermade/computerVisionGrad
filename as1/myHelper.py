@@ -226,6 +226,7 @@ class maFrignImg:
 		outDir = os.path.join(*outDir)
 		if not os.path.exists(outDir): os.makedirs(outDir)
 
+	@classmethod
 	def hfx(self, x, xi, h):
 		mag = [(i-j)**2 for i, j in zip(x, xi)]
 		mag = math.sqrt(sum(mag))
@@ -233,31 +234,44 @@ class maFrignImg:
 		if mag <= 3*h: return True
 		else: return False
 
-	def threadMS(self, x, rows, cols, ogIm, newIm, hc, hd, grayScale):
+	@classmethod
+	def threadMS(self, i, j, x, rows, cols, ogIm, newIm, hc, hd, grayScale):
+		count, meanSum, total = [0, 0, 0]
 		for k in range(rows):
 			for l in range(cols):
 				if grayScale:
 					xi = [ogIm[k,l][0]]
+
 				else:
 					xi = list(ogIm[k,l])
 
-				if self.hfx(x, xi, hc) and self.hfx([i,j], [k,l], hd):
-					count += 1
-					
+				magHc = [(a-b)**2 for a,b in zip(x, xi)]
+				magHc = math.sqrt(sum(magHc))
+
+				magHd = [(i-k)**2, (j-l)**2]
+				magHd = math.sqrt(sum(magHd))
+
+				
+
+				if magHc <= 3*hc and magHd <= 3*hd:
+					count += 1	
 					if grayScale:
-						vec1, vec2 = x, xi
-						vec1 += [i, j] 
-						vec2 += [k, l]
+						vec1, vec2 = x + [i, j], xi + [k, l]
 						mag = [(a-b)**2 for a, b in zip(vec1, vec2)]
 						mag = sum(mag)
 						exp = math.exp(-0.5*mag/hc**2) + math.exp(-0.5*mag/hd**2)
-
 						mag = math.sqrt(sum([a**2 for a in vec2]))
+
 						meanSum += mag*exp
 						total += exp
 
+
+						
+		
 		if grayScale:
 			newIm[i,j] = meanSum/total
+			# if j == cols//2:
+			# 	print('ogIm = {}, newIm = {}'.format(ogIm[i,j], newIm[i,j]))
 
 	def meanShift(self, hc, hd, m=None, im=None, steps=10, grayScale=False, poolNum=os.cpu_count()):
 		# Default using labd
@@ -279,23 +293,16 @@ class maFrignImg:
 			p = Pool(poolNum)
 			for i in tqdm(range(rows)):
 				for j in range(cols):
-					count, meanSum, total = 0, 0, 0
-
 					if grayScale:
 						x = [ogIm[i,j][0]]
 						
 					else:
 						x = list(ogIm[i,j])
 
-					# threadParmList = []
-					# for k in range(rows):
-					# 	for l in range(cols):
-					# 		#def threadMS(self, x, rows, cols, ogIm, newIm, hc, hd, grayScale):
-					# 		threadParmList.append([x, rows, cols, ogIm, newIm, hc, hd, grayScale])
+					#def threadMS(self, i, j, x, rows, cols, ogIm, newIm, hc, hd, grayScale=True):
+					p.apply_async(self.threadMS, (i, j, x, rows, cols, ogIm, newIm, hc, hd, grayScale))
 
-					p.apply_async(self.threadMS, [x, rows, cols, ogIm, newIm, hc, hd, grayScale])
-
-
+					# count, meanSum, total = 0, 0, 0
 					# for k in range(rows):
 					# 	for l in range(cols):
 					# 		if grayScale:
@@ -464,7 +471,7 @@ def main():
 	# Test 4
 	#def meanShift(self, hc, hd, m=None, im=None, steps=10, grayScale=False):
 	test = maFrignImg('{}'.format(sys.argv[1]))
-	test.meanShift(7, 8, 40, steps=5, grayScale=True)
+	test.meanShift(7, 8, 40, steps=1, grayScale=True)
 	test.save('{}'.format(sys.argv[2]), test.meanshift)
 
 if __name__ == '__main__':
