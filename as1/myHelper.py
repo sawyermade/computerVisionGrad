@@ -275,11 +275,11 @@ class maFrignImg:
 		newIm = newIm.astype(float)
 
 		# Pool
-		poolNum = 4
-		p = Pool(poolNum)
+		poolNum = os.cpu_count()	
 
 		# Goes through pixels
 		for step in tqdm(range(steps)):
+			p = Pool(poolNum)
 			for i in tqdm(range(rows)):
 				for j in range(cols):
 					count, meanSum, total = 0, 0, 0
