@@ -326,8 +326,8 @@ class maFrignImg:
 					# 	# print(newIm[i,j])
 
 			# Pool wait
-			pool.close()
-			pool.join()
+			p.close()
+			p.join()
 
 			# One iter complete			
 			temp = ogIm
