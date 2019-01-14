@@ -1,6 +1,7 @@
 import numpy as np 
 import imageio, os, math, sys
 from tqdm import tqdm
+from multiprocessing import Pool
 
 DEBUG = False
 
@@ -225,16 +226,38 @@ class maFrignImg:
 		outDir = os.path.join(*outDir)
 		if not os.path.exists(outDir): os.makedirs(outDir)
 
-	def hc(self, x, xi, hc):
-		if abs(x-xi) <= 3*hc: return True
+	def hfx(self, x, xi, h):
+		mag = [(i-j)**2 for i, j in zip(x, xi)]
+		mag = math.sqrt(sum(mag))
+
+		if mag <= 3*h: return True
 		else: return False
 
-	def hd(self, x, xi, hd):
-		xximag = x - xi 
-		xximag = math.sqrt(np.matmul(xximag, xximag.T))
+	def threadMS(self, x, rows, cols, ogIm, newIm, hc, hd, grayScale):
+		for k in range(rows):
+			for l in range(cols):
+				if grayScale:
+					xi = [ogIm[k,l][0]]
+				else:
+					xi = list(ogIm[k,l])
 
-		if xximag <= 3*hd: return True
-		else: return False
+				if self.hfx(x, xi, hc) and self.hfx([i,j], [k,l], hd):
+					count += 1
+					
+					if grayScale:
+						vec1, vec2 = x, xi
+						vec1 += [i, j] 
+						vec2 += [k, l]
+						mag = [(a-b)**2 for a, b in zip(vec1, vec2)]
+						mag = sum(mag)
+						exp = math.exp(-0.5*mag/hc**2) + math.exp(-0.5*mag/hd**2)
+
+						mag = math.sqrt(sum([a**2 for a in vec2]))
+						meanSum += mag*exp
+						total += exp
+
+		if grayScale:
+			newIm[i,j] = meanSum/total
 
 	def meanShift(self, hc, hd, m=None, im=None, steps=10, grayScale=False):
 		# Default using labd
@@ -247,7 +270,12 @@ class maFrignImg:
 		# Sets up info
 		rows, cols, chans = im.shape
 		ogIm = np.copy(im)
+		ogIm = ogIm.astype(float)
 		newIm = np.copy(im)
+		newIm = newIm.astype(float)
+
+		# Pool
+		poolNum = 4
 
 		# Goes through pixels
 		for step in tqdm(range(steps)):
@@ -256,31 +284,47 @@ class maFrignImg:
 					count, meanSum, total = 0, 0, 0
 
 					if grayScale:
-						x = ogIm[i,j][0]
+						x = [ogIm[i,j][0]]
+						
 					else:
-						x = ogIm[i,j]
+						x = list(ogIm[i,j])
 
+					threadParmList = []
 					for k in range(rows):
 						for l in range(cols):
-							if grayScale:
-								xi = ogIm[i,j][0]
-							else:
-								xi = ogIm[i,j]
+							#def threadMS(self, x, rows, cols, ogIm, newIm, hc, hd, grayScale):
+							threadParmList.append([x, rows, cols, ogIm, newIm, hc, hd, grayScale])
+					with Pool(poolNum) as p:
+						print(p.map(self.threadMS, threadParmList))
 
-							if self.hc(x, xi, hc) and self.hd(np.array([i,j]), np.array([k,l]), hd):
-								count += 1
+
+					# for k in range(rows):
+					# 	for l in range(cols):
+					# 		if grayScale:
+					# 			xi = [ogIm[k,l][0]]
+					# 		else:
+					# 			xi = list(ogIm[k,l])
+
+					# 		if self.hfx(x, xi, hc) and self.hfx([i,j], [k,l], hd):
+					# 			count += 1
 								
-								if grayScale:
-									xxivec = np.array([x, i, j]) - np.array([xi, k, l]) 
-									xxivec = np.matmul(xxivec, xxivec.T)
-									exp = math.exp(-0.5*xxivec/hc**2) + math.exp(-0.5*xxivec/hd**2)
+					# 			if grayScale:
+					# 				vec1, vec2 = x, xi
+					# 				vec1 += [i, j] 
+					# 				vec2 += [k, l]
+					# 				mag = [(a-b)**2 for a, b in zip(vec1, vec2)]
+					# 				mag = sum(mag)
+					# 				exp = math.exp(-0.5*mag/hc**2) + math.exp(-0.5*mag/hd**2)
 
-									meanSum += xxivec*exp
-									total += exp
+					# 				mag = math.sqrt(sum([a**2 for a in vec2]))
+					# 				meanSum += mag*exp
+					# 				total += exp
 
-					if grayScale:
-						newIm[i,j] = meanSum/total
+					# if grayScale:
+					# 	newIm[i,j] = meanSum/total
+					# 	# print(newIm[i,j])
 
+			# One iter complete			
 			temp = ogIm
 			ogIm = newIm
 			newIm = temp
