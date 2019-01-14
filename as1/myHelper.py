@@ -296,7 +296,7 @@ class maFrignImg:
 					# 		#def threadMS(self, x, rows, cols, ogIm, newIm, hc, hd, grayScale):
 					# 		threadParmList.append([x, rows, cols, ogIm, newIm, hc, hd, grayScale])
 
-					print(p.apply_async(self.threadMS, [x, rows, cols, ogIm, newIm, hc, hd, grayScale]))
+					p.apply_async(self.threadMS, [x, rows, cols, ogIm, newIm, hc, hd, grayScale])
 
 
 					# for k in range(rows):
