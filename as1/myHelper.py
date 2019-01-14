@@ -17,6 +17,9 @@ class maFrignImg:
 		self.xyz = None
 		self.backup = None
 		self.meanshift = None
+		self.ogIm = None
+		self.newIm = None
+		self.tempIm = None
 
 		if self.inPath:
 			self.rgb = imageio.imread(inPath)
@@ -235,12 +238,16 @@ class maFrignImg:
 		else: return False
 
 	@classmethod
-	def threadMS(self, i, j, x, rows, cols, ogIm, newIm, hc, hd, grayScale):
+	def threadMS(self, i, j, x, rows, cols, ogIm, hc, hd, grayScale):
 		count, meanSum, total = [0, 0, 0]
 		for k in range(rows):
 			for l in range(cols):
+
 				if grayScale:
-					xi = [ogIm[k,l][0]]
+					if len(ogIm.shape) == 2:
+						xi = [ogIm[k,l]]
+					else:
+						xi = [ogIm[k,l][0]]
 
 				else:
 					xi = list(ogIm[k,l])
@@ -251,27 +258,23 @@ class maFrignImg:
 				magHd = [(i-k)**2, (j-l)**2]
 				magHd = math.sqrt(sum(magHd))
 
-				
-
-				if magHc <= 3*hc and magHd <= 3*hd:
+				if magHc <= 3*hc and magHd <= 2*hd:
 					count += 1	
 					if grayScale:
 						vec1, vec2 = x + [i, j], xi + [k, l]
 						mag = [(a-b)**2 for a, b in zip(vec1, vec2)]
 						mag = sum(mag)
 						exp = math.exp(-0.5*mag/hc**2) + math.exp(-0.5*mag/hd**2)
+						
 						mag = math.sqrt(sum([a**2 for a in vec2]))
-
 						meanSum += mag*exp
 						total += exp
 
-
-						
-		
 		if grayScale:
-			newIm[i,j] = meanSum/total
-			# if j == cols//2:
-			# 	print('ogIm = {}, newIm = {}'.format(ogIm[i,j], newIm[i,j]))
+			newPixel = meanSum/total
+			if i == rows//2 and j == cols//2:
+				print('ogIm = {}, newIm = {}, mean = {}'.format(ogIm[i,j], newPixel, meanSum/total))
+			return newPixel
 
 	def meanShift(self, hc, hd, m=None, im=None, steps=10, grayScale=False, poolNum=os.cpu_count()):
 		# Default using labd
@@ -282,33 +285,39 @@ class maFrignImg:
 			im = self.rgb
 
 		# Sets up info
-		rows, cols, chans = im.shape
-		ogIm = np.copy(im)
-		ogIm = ogIm.astype(float)
-		newIm = np.copy(im)
-		newIm = newIm.astype(float)
+		if len(im.shape) == 2:
+			rows, cols = im.shape
+		else:
+			rows, cols, chans = im.shape
+		self.ogIm = np.copy(im)
+		self.ogIm = self.ogIm.astype(float)
+		self.newIm = np.copy(im)
+		self.newIm = self.newIm.astype(float)
 
 		# Goes through pixels
 		for step in tqdm(range(steps)):
 			p = Pool(poolNum)
-			for i in tqdm(range(rows)):
+			for i in range(rows):
 				for j in range(cols):
 					if grayScale:
-						x = [ogIm[i,j][0]]
+						if len(im.shape) == 2:
+							x = [self.ogIm[i,j]]
+						else:
+							x = [self.ogIm[i,j][0]]
 						
 					else:
-						x = list(ogIm[i,j])
+						x = list(self.ogIm[i,j])
 
 					#def threadMS(self, i, j, x, rows, cols, ogIm, newIm, hc, hd, grayScale=True):
-					p.apply_async(self.threadMS, (i, j, x, rows, cols, ogIm, newIm, hc, hd, grayScale))
+					newPix = p.apply_async(self.threadMS, (i, j, x, rows, cols, self.ogIm, hc, hd, grayScale))
 
 					# count, meanSum, total = 0, 0, 0
 					# for k in range(rows):
 					# 	for l in range(cols):
 					# 		if grayScale:
-					# 			xi = [ogIm[k,l][0]]
+					# 			xi = [self.ogIm[k,l][0]]
 					# 		else:
-					# 			xi = list(ogIm[k,l])
+					# 			xi = list(self.ogIm[k,l])
 
 					# 		if self.hfx(x, xi, hc) and self.hfx([i,j], [k,l], hd):
 					# 			count += 1
@@ -325,21 +334,24 @@ class maFrignImg:
 					# 				meanSum += mag*exp
 					# 				total += exp
 
-					# if grayScale:
-					# 	newIm[i,j] = meanSum/total
-					# 	# print(newIm[i,j])
+					if grayScale:
+						self.newIm[i,j] = newPix.get()
+						if i == rows//2 and j==rows//2:
+							print('newPix.get = ', newPix.get(), 'ogIm = ', self.ogIm[i,j], 'newIm = ', self.newIm[i,j])
 
 			# Pool wait
 			p.close()
 			p.join()
 
 			# One iter complete			
-			temp = ogIm
-			ogIm = newIm
-			newIm = temp
+			self.tempIm = self.ogIm
+			self.ogIm = self.newIm
+			self.newIm = self.tempIm
+
+			print('\nStep = ', self.ogIm[rows//2,cols//2], '\n')
 
 		# Return
-		self.meanshift = ogIm
+		self.meanshift = self.ogIm
 		return True
 
 def convertXYZ(im):
@@ -470,8 +482,16 @@ def main():
 
 	# Test 4
 	#def meanShift(self, hc, hd, m=None, im=None, steps=10, grayScale=False):
+	if len(sys.argv) > 3:
+		numSteps = int(sys.argv[3])
+	else:
+		numSteps = 5
+	if len(sys.argv) > 4:
+		cpus = int(sys.argv[4])
+	else:
+		cpus = os.cpu_count()
 	test = maFrignImg('{}'.format(sys.argv[1]))
-	test.meanShift(7, 8, 40, steps=1, grayScale=True)
+	test.meanShift(7, 8, 40, steps=numSteps, grayScale=True, poolNum=cpus)
 	test.save('{}'.format(sys.argv[2]), test.meanshift)
 
 if __name__ == '__main__':
