@@ -289,13 +289,15 @@ class maFrignImg:
 					else:
 						x = list(ogIm[i,j])
 
-					threadParmList = []
-					for k in range(rows):
-						for l in range(cols):
-							#def threadMS(self, x, rows, cols, ogIm, newIm, hc, hd, grayScale):
-							threadParmList.append([x, rows, cols, ogIm, newIm, hc, hd, grayScale])
-					with Pool(poolNum) as p:
-						print(p.map(self.threadMS, threadParmList))
+					# threadParmList = []
+					# for k in range(rows):
+					# 	for l in range(cols):
+					# 		#def threadMS(self, x, rows, cols, ogIm, newIm, hc, hd, grayScale):
+					# 		threadParmList.append([x, rows, cols, ogIm, newIm, hc, hd, grayScale])
+					with Pool(rows*cols) as p:
+						print(p.apply_async(self.threadMS, [x, rows, cols, ogIm, newIm, hc, hd, grayScale]))
+						pool.close()
+						pool.join()
 
 
 					# for k in range(rows):
