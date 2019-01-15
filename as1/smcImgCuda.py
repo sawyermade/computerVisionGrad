@@ -203,7 +203,7 @@ def msCudaNaiveGS(img, newImg):
 				
 				# Calculates spatial and intensity distances
 				magHc = abs(x-xi)
-				magHd = math.sqrt((i-k)**2 + (j-l)**2)
+				magHd = math.sqrt(math.pow(i-k, 2) + math.pow(j-l, 2))
 
 				# If within distances
 				if magHc <= sdc*hc and magHd <= sdd*hd:
