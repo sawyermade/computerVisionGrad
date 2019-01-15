@@ -5,6 +5,8 @@ from tqdm import tqdm
 # CUDA
 from numba import cuda
 
+DEBUG = False
+
 # Converts color space
 def rgb2xyz(im):
 	# Creates empty matrix
@@ -12,7 +14,7 @@ def rgb2xyz(im):
 	xyzIm = np.zeros((rows, cols, 3), dtype=float)
 
 	# Converts all pixels to XYZ
-	for i in tqdm(range(rows)):
+	for i in range(rows):
 		for j in range(cols):
 			# Grayscale
 			if channels < 3:
@@ -99,10 +101,10 @@ def xyz2lab(xyzIm):
 	# Creates Lab matrix
 	rows, cols, _ = xyzIm.shape
 	labImF = np.zeros((rows, cols, 3), dtype=float)
-	labImD = np.zeros((rows, cols, 3), dtype=np.uint8)
+	labImD = np.zeros((rows, cols, 3), dtype=float)
 
 	# Converts XYZ to Lab
-	for i in tqdm(range(rows)):
+	for i in range(rows):
 		for j in range(cols):
 			X, Y, Z = xyzIm[i, j]
 
@@ -121,11 +123,11 @@ def xyz2lab(xyzIm):
 			a = 500*(X-Y)
 			b = 200*(Y-Z)
 
-			Ld = np.uint8(round(L*255/100))
-			ad = np.uint8(round(a+128))
-			bd = np.uint8(round(b+128))
+			Ld = L*255/100
+			ad = a+128
+			bd = b+128
 
-			labImF[i,j] = np.array([L, a, b])
+			labImF[i,j] = [L, a, b]
 			labImD[i,j] = [Ld, ad, bd]
 
 			if DEBUG and i == 0 and j == 0: print(labImF[i,j], labImD[i,j])
@@ -146,6 +148,10 @@ def lab2xyz(labIm):
 	for i in range(rows):
 		for j in range(cols):
 			L, a, b = labIm[i, j]
+
+			L = L*100/255
+			a = a-128
+			b = b-128
 
 			Y = (L+16)/116.0
 			X = a/500 + Y
@@ -222,11 +228,63 @@ def msCudaNaiveGS(img, newImg):
 		# Clustering
 		if m < count:
 			newImg[i,j,0] = meanSum / meanTotal
+
+@cuda.jit
+def msCudaNaiveLAB(img, newImg):
+	# Gets coordinates i, j
+	tx = cuda.threadIdx.x
+	ty = cuda.threadIdx.y
+	bx = cuda.blockIdx.x
+	by = cuda.blockIdx.y
+	bw = cuda.blockDim.x
+	bh = cuda.blockDim.y
+	i = tx + bx*bw
+	j = ty + by*bh
+
+	# If i, h inbounds
+	if i < img.shape[0] and j < img.shape[1]:
+		# Sets up vars needed
+		meanSuml, meanSuma, meanSumb, meanTotal, count = 0.0, 0.0, 0.0, 0.0, 0
+		hc, hd, m, sdc, sdd = 8, 7, 40, 3, 3
+		hci, hdi = 1.0/hc**2, 1.0/hd**2
+		
+		# Sets current pixel and compares against rest
+		x = img[i,j]
+		for k in range(img.shape[0]):
+			for l in range(img.shape[1]):
+				# Gets next pixel intensity
+				xi = img[k,l]
+				
+				# Calculates spatial and intensity distances
+				magHc = math.sqrt(math.pow(x[0]-xi[0], 2) + math.pow(x[1]-xi[1], 2) + math.pow(x[2]-xi[2], 2))
+				magHd = math.sqrt(math.pow(i-k, 2) + math.pow(j-l, 2))
+
+				# If within distances
+				if magHc <= sdc*hc and magHd <= sdd*hd:
+					count += 1
+
+					# Calculates
+					xxil, xxia, xxib, xxix, xxiy = (x[0]-xi[0])**2, (x[1]-xi[1])**2, (x[2]-xi[2])**2, (i-k)**2, (j-l)**2
+					xxi = xxil*hci + xxia*hci + xxib*hci + xxix*hdi + xxiy*hdi
+					exp = math.exp(-0.5 * xxi)
+
+					# Adds to sums
+					meanSuml += xi[0] * exp
+					meanSuma += xi[1] * exp
+					meanSumb += xi[2] * exp
+					meanTotal += exp
+		
+		# Clustering
+		if m < count:
+			newImg[i,j,0] = meanSuml / meanTotal
+			newImg[i,j,1] = meanSuma / meanTotal
+			newImg[i,j,2] = meanSumb / meanTotal
 	
 # Main
 if __name__ == '__main__':
 	# Gets args
 	_, inPath, outPath, cardNumber, steps = sys.argv
+	grayscale = False
 
 	# Sets cuda device
 	os.environ['CUDA_VISIBLE_DEVICES'] = cardNumber
@@ -234,22 +292,20 @@ if __name__ == '__main__':
 	# Opens image
 	img = imageio.imread(inPath)
 	rows, cols = img.shape[0], img.shape[1]
-	# print('img shape = {}'.format(img.shape))
+	print('img shape = {}'.format(img.shape))
 
 	# Checks for single channel grayscale
 	if len(img.shape) < 3:
-		tempImg = np.zeros((rows, cols, 1), np.uint8)
+		tempImg = np.zeros((rows, cols, 1), np.float32)
 		for i in range(rows):
 			for j in range(cols):
 				tempImg[i,j,0] = img[i,j]
 		# print(img.shape)
 		img = tempImg
 	
-
 	# Runs steps
-	grayscale = True
 	if grayscale and img.shape[2] > 1:
-		tempImg = np.zeros((rows, cols, 1), np.uint8)
+		tempImg = np.zeros((rows, cols, 1), np.float32)
 		for i in range(rows):
 			for j in range(cols):
 				tempImg[i,j,0] = img[i,j,0]
@@ -259,8 +315,9 @@ if __name__ == '__main__':
 		img = tempImg
 		# print(img.shape)
 
-	else:
-		tempImg = np.zeros((rows, cols, 3), np.uint8)
+	elif not grayscale:
+		_, img = rgb2lab(img)
+		tempImg = np.zeros((rows, cols, 3), np.float32)
 		for i in range(rows):
 			for j in range(cols):
 				tempImg[i,j] = img[i,j]
@@ -273,24 +330,25 @@ if __name__ == '__main__':
 	# Copies img
 	newImg = np.copy(img)
 	
-	# Goes through steps
+	# Config blocks
 	TPB = 16
-	hc, hd, m = 7, 8, 40
+	tpb = (TPB, TPB)
+	bgx = int(math.ceil(rows / TPB))
+	bgy = int(math.ceil(cols / TPB))
+	bgrid = (bgx, bgy)
+
+	# Goes through steps
 	for step in tqdm(range(int(steps))):
 	# for step in range(int(steps)):
 		# Copies to card
 		imgCuda = cuda.to_device(newImg)
 		newImgCuda = cuda.to_device(newImg)
 
-		# Config blocks
-		tpb = (TPB, TPB)
-		bgx = int(math.ceil(rows / TPB))
-		bgy = int(math.ceil(cols / TPB))
-		bgrid = (bgx, bgy)
-
 		# Run kernel
 		if grayscale:
 			msCudaNaiveGS[bgrid, tpb](imgCuda, newImgCuda)
+		else:
+			msCudaNaiveLAB[bgrid, tpb](imgCuda, newImgCuda)
 
 		# Copy back
 		newImg = newImgCuda.copy_to_host()
@@ -299,7 +357,8 @@ if __name__ == '__main__':
 	# skip = 1000
 	# for i in range(rows):
 	# 	for j in range(cols):
-	# 		if i % skip == 0 and i % skip == 0:
+	# 		# if i % skip == 0 and i % skip == 0:
+	# 		if i == 0 and j < 10:
 	# 			print(img[i,j,0], newImg[i,j,0])
 
 	# Saves img
@@ -308,5 +367,11 @@ if __name__ == '__main__':
 		outDir = os.path.join(*outDir)
 		if not os.path.exists(outDir):
 			os.makedirs(outDir)
+
+	if not grayscale:
+
+		newImg = lab2rgb(newImg)
+
+	# print(newImg.shape)
 	# newImg = newImg.astype(np.uint8)
 	imageio.imwrite(outPath, newImg)
