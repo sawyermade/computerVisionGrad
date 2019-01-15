@@ -192,25 +192,28 @@ def msCudaNaiveGS(img, newImg):
 		# Sets up vars needed
 		meanSum, meanTotal, count = 0.0, 0.0, 0
 		hc, hd, m, sdc, sdd = 8, 7, 20, 2, 2
+		hci, hdi = 1.0/hc**2, 1.0/hd**2
 		
 		# Sets current pixel and compares against rest
 		x = img[i,j,0]
 		for k in range(img.shape[0]):
 			for l in range(img.shape[1]):
+				# Gets next pixel intensity
 				xi = img[k,l,0]
 				
-				magHc = math.sqrt(math.pow(x-xi, 2))
-				magHd = math.sqrt(math.pow(i-k, 2) + math.pow(j-l, 2))
+				# Calculates spatial and intensity distances
+				magHc = abs(x-xi)
+				magHd = math.sqrt((i-k)**2 + (j-l)**2)
 
 				# If within distances
 				if magHc <= sdc*hc and magHd <= sdd*hd:
 					count += 1
 
 					# Calculates
-					xxi = (x-xi)**2 + (i-k)**2 + (j-l)**2
-					# xxi = math.pow(x-xi, 2) + math.pow(i-k, 2) + math.pow(j-l, 2)
-					exp1 = math.exp(-0.5 * xxi / hc**2) + math.exp(-0.5 * xxi / hd**2)
-					magxi = math.sqrt(math.pow(xi, 2) + math.pow(k, 2) + math.pow(l, 2))
+					xxia, xxib, xxic = (x-xi)**2, (i-k)**2, (j-l)**2
+					xxi = xxia*hci + xxib*hdi + xxic*hdi
+					exp1 = math.exp(-0.5 * xxi)
+					# magxi = math.sqrt(math.pow(xi, 2) + math.pow(k, 2) + math.pow(l, 2))
 
 					# Adds to sums
 					meanSum += xi * exp1
