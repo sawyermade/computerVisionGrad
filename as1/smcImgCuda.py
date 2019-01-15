@@ -191,7 +191,7 @@ def msCudaNaiveGS(img, newImg):
 	if i < img.shape[0] and j < img.shape[1]:
 		# Sets up vars needed
 		meanSum, meanTotal, count = 0.0, 0.0, 0
-		hc, hd, m, sdc, sdd = 8, 7, 20, 2, 2
+		hc, hd, m, sdc, sdd = 8, 7, 40, 3, 3
 		hci, hdi = 1.0/hc**2, 1.0/hd**2
 		
 		# Sets current pixel and compares against rest
