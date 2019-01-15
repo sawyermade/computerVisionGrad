@@ -490,9 +490,11 @@ def main():
 		cpus = int(sys.argv[4])
 	else:
 		cpus = os.cpu_count()
-	test = maFrignImg('{}'.format(sys.argv[1]))
-	test.meanShift(7, 8, 40, steps=numSteps, grayScale=True, poolNum=cpus)
-	test.save('{}'.format(sys.argv[2]), test.meanshift)
+	# test = maFrignImg('{}'.format(sys.argv[1]))
+	# test.meanShift(7, 8, 40, steps=numSteps, grayScale=True, poolNum=cpus)
+	# test.save('{}'.format(sys.argv[2]), test.meanshift)
+
+
 
 if __name__ == '__main__':
 	DEBUG = True
