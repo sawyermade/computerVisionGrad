@@ -2,12 +2,12 @@
 
 ## Install:
 ```
-$ python3 -m pip install -r requirements.txt --user
+$ bash conda-install.sh
 ``` 
 
-## Test:
+## Test Cuda:
 ```
-$ python3 myHelper.py
+$ . ./run-example-cuda.sh
 ```
 
 ## Description:

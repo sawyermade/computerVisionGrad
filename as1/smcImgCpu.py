@@ -5,7 +5,7 @@ from multiprocessing import Pool
 
 DEBUG = False
 
-class maFrignImg:
+class smcImg:
 	# Init stuff
 	def __init__(self, inPath=None, outPath=None, cSpace=None):
 		self.inPath = inPath
@@ -469,13 +469,13 @@ def main():
 	# imWrite('output/test/lab.png', labD)
 
 	# # Test 2
-	# test = maFrignImg('images/test-01.jpg')
+	# test = smcImg('images/test-01.jpg')
 	# test.rgb2lab()
 	# test.save('output/test/test-01-lab.png', test.labd)
 	# test.save('output/test/test-01.png')
 
 	# # Test 3
-	# test = maFrignImg('images/test-01.jpg')
+	# test = smcImg('images/test-01.jpg')
 	# test.rgb2lab()
 	# test.lab2rgb()
 	# test.save('output/test/test-01-lab2rgb.png')
@@ -490,7 +490,7 @@ def main():
 		cpus = int(sys.argv[4])
 	else:
 		cpus = os.cpu_count()
-	# test = maFrignImg('{}'.format(sys.argv[1]))
+	# test = smcImg('{}'.format(sys.argv[1]))
 	# test.meanShift(7, 8, 40, steps=numSteps, grayScale=True, poolNum=cpus)
 	# test.save('{}'.format(sys.argv[2]), test.meanshift)
 
