@@ -212,12 +212,12 @@ def msCudaNaiveGS(img, newImg):
 					# Calculates
 					xxia, xxib, xxic = (x-xi)**2, (i-k)**2, (j-l)**2
 					xxi = xxia*hci + xxib*hdi + xxic*hdi
-					exp1 = math.exp(-0.5 * xxi)
+					exp = math.exp(-0.5 * xxi)
 					# magxi = math.sqrt(math.pow(xi, 2) + math.pow(k, 2) + math.pow(l, 2))
 
 					# Adds to sums
-					meanSum += xi * exp1
-					meanTotal += exp1
+					meanSum += xi * exp
+					meanTotal += exp
 		
 		# Clustering
 		if m < count:
