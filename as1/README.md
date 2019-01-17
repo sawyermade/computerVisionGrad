@@ -5,7 +5,7 @@
 $ conda create -n cv python=3 accelerate imageio tqdm cudatoolkit=7.5 -y
 ``` 
 
-## Test Cuda:
+## Run Cuda:
   python3 smcImgCuda.py input output steps hc hd m sdc sdd grayscale cardNumber
 
 ### Example:
