@@ -183,7 +183,7 @@ def lab2rgb(lab):
 
 # Grayscale cuda kernel
 @cuda.jit
-def msCudaNaiveGS(img, newImg):
+def msCudaNaiveGS(img, newImg, hc, hd, m, sdc, sdd):
 	# Gets coordinates i, j
 	tx = cuda.threadIdx.x
 	ty = cuda.threadIdx.y
@@ -198,7 +198,7 @@ def msCudaNaiveGS(img, newImg):
 	if i < img.shape[0] and j < img.shape[1]:
 		# Sets up vars needed
 		meanSum, meanTotal, count = 0.0, 0.0, 0
-		hc, hd, m, sdc, sdd = 4, 4, 20, 3, 3
+		# hc, hd, m, sdc, sdd = 4, 4, 20, 3, 3
 		hci, hdi = 1.0/hc**2, 1.0/hd**2
 		
 		# Sets current pixel and compares against rest
@@ -232,7 +232,7 @@ def msCudaNaiveGS(img, newImg):
 
 # Color cuda kernel
 @cuda.jit
-def msCudaNaiveLAB(img, newImg):
+def msCudaNaiveLAB(img, newImg, hc, hd, m, sdc, sdd):
 	# Gets coordinates i, j
 	tx = cuda.threadIdx.x
 	ty = cuda.threadIdx.y
@@ -247,7 +247,7 @@ def msCudaNaiveLAB(img, newImg):
 	if i < img.shape[0] and j < img.shape[1]:
 		# Sets up vars needed
 		meanSuml, meanSuma, meanSumb, meanTotal, count = 0.0, 0.0, 0.0, 0.0, 0
-		hc, hd, m, sdc, sdd = 8, 7, 20, 3, 3
+		# hc, hd, m, sdc, sdd = 8, 7, 20, 3, 3
 		hci, hdi = 1.0/hc**2, 1.0/hd**2
 		
 		# Sets current pixel and compares against rest
@@ -284,9 +284,17 @@ def msCudaNaiveLAB(img, newImg):
 	
 # Main
 if __name__ == '__main__':
+	# Check args
+	if len(sys.argv) < 11:
+		print('Arguments: inPath, outPath, steps, hc, hd, m, sdc, sdd, gs, cardNumber')
+		sys.exit(0)
+
 	# Gets args
-	_, inPath, outPath, cardNumber, steps = sys.argv[:5]
-	if len(sys.argv) > 5:
+	_, inPath, outPath, steps, hc, hd, m, sdc, sdd, gs, cardNumber = sys.argv
+	hc, hd, m, sdc, sdd = int(hc), int(hd), int(m), int(sdc), int(sdd)
+	
+	# Checks for grayscale
+	if gs.startswith('t') or gs.startswith('T'):
 		grayscale = True
 	else:
 		grayscale = False
@@ -353,7 +361,7 @@ if __name__ == '__main__':
 		if grayscale:
 			msCudaNaiveGS[bgrid, tpb](imgCuda, newImgCuda)
 		else:
-			msCudaNaiveLAB[bgrid, tpb](imgCuda, newImgCuda)
+			msCudaNaiveLAB[bgrid, tpb](imgCuda, newImgCuda, hc, hd, m, sdc, sdd)
 
 		# Copy back
 		newImg = newImgCuda.copy_to_host()
@@ -374,7 +382,6 @@ if __name__ == '__main__':
 			os.makedirs(outDir)
 
 	if not grayscale:
-
 		newImg = lab2rgb(newImg)
 
 	# print(newImg.shape)
