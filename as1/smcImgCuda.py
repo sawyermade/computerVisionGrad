@@ -181,6 +181,7 @@ def rgb2lab(rgb):
 def lab2rgb(lab):
 	return xyz2rgb(lab2xyz(lab))
 
+# Grayscale cuda kernel
 @cuda.jit
 def msCudaNaiveGS(img, newImg):
 	# Gets coordinates i, j
@@ -197,7 +198,7 @@ def msCudaNaiveGS(img, newImg):
 	if i < img.shape[0] and j < img.shape[1]:
 		# Sets up vars needed
 		meanSum, meanTotal, count = 0.0, 0.0, 0
-		hc, hd, m, sdc, sdd = 8, 7, 40, 3, 3
+		hc, hd, m, sdc, sdd = 4, 4, 20, 3, 3
 		hci, hdi = 1.0/hc**2, 1.0/hd**2
 		
 		# Sets current pixel and compares against rest
@@ -229,6 +230,7 @@ def msCudaNaiveGS(img, newImg):
 		if m < count:
 			newImg[i,j,0] = meanSum / meanTotal
 
+# Color cuda kernel
 @cuda.jit
 def msCudaNaiveLAB(img, newImg):
 	# Gets coordinates i, j
@@ -245,7 +247,7 @@ def msCudaNaiveLAB(img, newImg):
 	if i < img.shape[0] and j < img.shape[1]:
 		# Sets up vars needed
 		meanSuml, meanSuma, meanSumb, meanTotal, count = 0.0, 0.0, 0.0, 0.0, 0
-		hc, hd, m, sdc, sdd = 8, 7, 40, 3, 3
+		hc, hd, m, sdc, sdd = 8, 7, 20, 3, 3
 		hci, hdi = 1.0/hc**2, 1.0/hd**2
 		
 		# Sets current pixel and compares against rest
@@ -283,8 +285,11 @@ def msCudaNaiveLAB(img, newImg):
 # Main
 if __name__ == '__main__':
 	# Gets args
-	_, inPath, outPath, cardNumber, steps = sys.argv
-	grayscale = False
+	_, inPath, outPath, cardNumber, steps = sys.argv[:5]
+	if len(sys.argv) > 5:
+		grayscale = True
+	else:
+		grayscale = False
 
 	# Sets cuda device
 	os.environ['CUDA_VISIBLE_DEVICES'] = cardNumber
@@ -292,7 +297,7 @@ if __name__ == '__main__':
 	# Opens image
 	img = imageio.imread(inPath)
 	rows, cols = img.shape[0], img.shape[1]
-	print('img shape = {}'.format(img.shape))
+	# print('img shape = {}'.format(img.shape))
 
 	# Checks for single channel grayscale
 	if len(img.shape) < 3:
