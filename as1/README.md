@@ -1,4 +1,4 @@
-# Assignment 1 Mean Shift Sementation Python3 Numba Cuda
+# Assignment 1 Mean Shift Sementation: Python3, Numba, Cuda
 
 ## Install Conda Env:
 ```
