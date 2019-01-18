@@ -383,6 +383,7 @@ if __name__ == '__main__':
 
 	if not grayscale:
 		newImg = lab2rgb(newImg)
+		print(newImg)
 
 	# print(newImg.shape)
 	# newImg = newImg.astype(np.uint8)
