@@ -243,6 +243,7 @@ def msCudaNaiveLAB(img, newImg, hc, hd, m, sdc, sdd):
 	i = tx + bx*bw
 	j = ty + by*bh
 
+
 	# If i, h inbounds
 	if i < img.shape[0] and j < img.shape[1]:
 		# Sets up vars needed
