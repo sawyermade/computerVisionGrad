@@ -12,6 +12,7 @@ def kalmanFilter(inPath, sigma, K):
 			fileList = [f for f in files if f.endswith('.png') or f.endswith('.jpg')]
 			fileList.sort(key=lambda x: int(x.split('.')[0]))
 			fileList = [os.path.join(root, f) for f in fileList]
+			# print(fileList)
 
 	# Gets first frame and gets points
 	prevFrame = imageio.imread(fileList[0], as_gray=True)
@@ -73,8 +74,8 @@ def kalmanFilter(inPath, sigma, K):
 			P1_ = np.matmul(np.matmul(A, P0), A.T) + Q
 			# P1_ = P0
 			# print(P1_)
-			rows, cols = int(math.sqrt(math.ceil(P1_[0,0]))), int(math.sqrt(math.ceil(P1_[1,1])))
-			sigx, sigy = 3*rows, 3*cols
+			rows, cols = int(math.ceil(math.sqrt(P1_[0,0]))), int(math.ceil(math.sqrt(P1_[1,1])))
+			sigx, sigy = 2*rows, 2*cols
 
 			# Autocorrelates point with prev image and current image
 			Mt1 = autocorrelate(prevFrame, currFrame, St1_, sigx, sigy, sigma)
@@ -146,7 +147,7 @@ def autocorrelate(img1, img2, St1_, rows, cols, sigma):
 
 			# Get sum with gauss kernel
 			npsum = np.sum(np.multiply(np.square(diffMat), kern))
-			if npsum == 0: npsum = sys.maxsize//4
+			# if npsum == 0: npsum = sys.maxsize//4
 			sumMat[i-dist, j-dist] = npsum
 
 	# Finds min coords
