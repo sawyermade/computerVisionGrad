@@ -9,16 +9,17 @@ def kalmanFilter(inPath, sigma, K):
 	# Gets file paths
 	for root, dirs, files in os.walk(inPath):
 		if files:
-			fileList = [f for f in files if f.endswith('.png')]
+			fileList = [f for f in files if f.endswith('.png') or f.endswith('.jpg')]
 			fileList.sort(key=lambda x: int(x.split('.')[0]))
 			fileList = [os.path.join(root, f) for f in fileList]
 
 	# Gets first frame and gets points
 	prevFrame = imageio.imread(fileList[0], as_gray=True)
 	dx, dy = firstOrderED(prevFrame, sigma)
-	prevPoints = autocorrelateEigen(dx, dy, sigma, K)
+	prevPoints, points = autocorrelateEigen(dx, dy, sigma, K)
 	prevPoints = [(p[0], p[1], 0, 0) for p in prevPoints]
 
+	imageio.imwrite('eigen0.png', points)
 
 	# Models
 	A = np.array([
@@ -89,7 +90,7 @@ def kalmanFilter(inPath, sigma, K):
 			# St1[2], St1[3] = -1*St1[2], -1*St1[3]
 			# St0[2], St0[3] = St1[2], St1[3]
 			# St1 = np.matmul(A, St0)
-			# print(St1_, St1, Mt1)
+			print(St0, St1, Mt1)
 			# print(P1)
 
 			# Adds to newPoints and P0List
@@ -144,11 +145,13 @@ def autocorrelate(img1, img2, St1_, rows, cols, sigma):
 			diffMat = np.subtract(pad1[startx:stopx+1, starty:stopy+1], pad2[startx:stopx+1, starty:stopy+1])
 
 			# Get sum with gauss kernel
-			sumMat[i-dist, j-dist] = np.sum(np.multiply(np.square(diffMat), kern))
+			npsum = np.sum(np.multiply(np.square(diffMat), kern))
+			if npsum == 0: npsum = sys.maxsize//4
+			sumMat[i-dist, j-dist] = npsum
 
 	# Finds min coords
 	newx, newy = np.unravel_index(np.argmin(sumMat), sumMat.shape)
-	print(np.argmin(sumMat), newx, newy)
+	# print(np.argmin(sumMat), newx, newy)
 
 	# Returns new measurement
 	# print(newx, newy)
@@ -216,7 +219,7 @@ def autocorrelateEigen(dx, dy, sigma, K):
 		pointList.append((x, y))
 
 	# Return eigen matrix
-	return pointList
+	return pointList, points
 
 def firstOrderED(img, sigma):
 	# Sigma shit
