@@ -90,7 +90,7 @@ def kalmanFilter(inPath, sigma, K):
 			# St1[2], St1[3] = -1*St1[2], -1*St1[3]
 			# St0[2], St0[3] = St1[2], St1[3]
 			# St1 = np.matmul(A, St0)
-			print(St0, St1, Mt1)
+			print(St0, St1_, St1, Mt1)
 			# print(P1)
 
 			# Adds to newPoints and P0List
