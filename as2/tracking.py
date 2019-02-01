@@ -76,12 +76,13 @@ def kalmanFilter(inPath, sigma, K):
 			Mt1 = autocorrelate(prevFrame, currFrame, St1_, sigx, sigy, sigma)
 
 			#DEBUG
-			# print('old = ({}, {})  new = ({}, {})'.format(St0[0], St0[1], Mt1[0], Mt1[1]))
+			print('old = ({}, {})  new = ({}, {})'.format(St0[0], St0[1], Mt1[0], Mt1[1]))
 
 			# Calculate St1, P1
 			K = np.matmul(np.matmul(P1_, H.T), np.linalg.inv(np.matmul(np.matmul(H, P1_), H.T) + R))
 			P1 = P1_ + np.matmul(np.matmul(K, H), P1_)
 			St1 = St1_ + np.matmul(K, Mt1 - np.matmul(H, St1_))
+			St1[2], St1[3] = -1*St1[2], -1*St1[3]
 			# St0[2], St0[3] = St1[2], St1[3]
 			# St1 = np.matmul(A, St0)
 			# print(St1_, St1)
