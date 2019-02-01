@@ -51,7 +51,7 @@ def kalmanFilter(inPath, sigma, K):
 	# Make initial P0 array
 	P0List = np.ndarray((K, 4, 4))
 	for i in range(K):
-		P0List[i] = P00
+		P0List[i] = np.copy(P00)
 	# print(P0List)
 
 	# Goes through rest of images
