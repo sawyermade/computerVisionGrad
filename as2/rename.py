@@ -2,7 +2,7 @@ import os, re, sys
 
 for root, dirs, files in os.walk(sys.argv[1]):
 
-	reg = re.compile(r'^(?:frame)(?:_)?([\d]+\.png|[\d]+\.jpg)$')
+	reg = re.compile(r'^(?:frame)(?:_)?(\d+\.png|\d+\.jpg)$')
 
 	if files:
 		fileList = [f for f in files if f.endswith('.png') or f.endswith('.jpg')]
