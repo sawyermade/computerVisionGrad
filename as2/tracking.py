@@ -68,6 +68,7 @@ def kalmanFilter(inPath, sigma, K):
 			St0 = np.array([pp[0], pp[1], pp[2], pp[3]])
 			St1_ = np.matmul(A, St0)
 			P1_ = np.matmul(np.matmul(A, P0), A.T) + Q
+			print(P1_)
 			rows, cols = int(math.sqrt(math.ceil(P1_[0,0]))), int(math.sqrt(math.ceil(P1_[1,1])))
 			sigx, sigy = 3*rows, 3*cols
 
@@ -84,16 +85,17 @@ def kalmanFilter(inPath, sigma, K):
 			# St0[2], St0[3] = St1[2], St1[3]
 			# St1 = np.matmul(A, St0)
 			# print(St1_, St1)
+			# print(P1)
 
 			# Adds to newPoints and P0List
 			newPoints.append((int(St1[0]), int(St1[1]), int(St1[2]), int(St1[3])))
-			newP0List[count] = P1
+			newP0List[count] = np.copy(P1)
 			count += 1
 
 		prevPoints = newPoints
 		P0List = newP0List
 		prevFrame = currFrame
-		# print()
+		print()
 
 def autocorrelate(img1, img2, St1_, rows, cols, sigma):	
 	# Sigma shit
@@ -143,7 +145,7 @@ def autocorrelate(img1, img2, St1_, rows, cols, sigma):
 	newx, newy = np.unravel_index(np.argmin(sumMat), sumMat.shape)
 
 	# Returns new measurement
-	print(newx, newy)
+	# print(newx, newy)
 	return np.array([newx, newy]).reshape((2,))
 
 def autocorrelateEigen(dx, dy, sigma, K):	
