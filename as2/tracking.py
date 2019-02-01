@@ -55,7 +55,7 @@ def kalmanFilter(inPath, sigma, K):
 	# print(P0List)
 
 	# Goes through rest of images
-	for imgPath in tqdm(fileList[1:10]):
+	for imgPath in tqdm(fileList[1:20]):
 		# Gets image
 		currFrame = imageio.imread(imgPath, as_gray=True)
 
@@ -67,8 +67,11 @@ def kalmanFilter(inPath, sigma, K):
 			# Calcs intermediates
 			St0 = np.array([pp[0], pp[1], pp[2], pp[3]])
 			St1_ = np.matmul(A, St0)
+			# if St1_[0] < 0: St1_[0] = 0
+			# if St1_[1] < 0: St1_[1] = 0
 			P1_ = np.matmul(np.matmul(A, P0), A.T) + Q
-			print(P1_)
+			# P1_ = P0
+			# print(P1_)
 			rows, cols = int(math.sqrt(math.ceil(P1_[0,0]))), int(math.sqrt(math.ceil(P1_[1,1])))
 			sigx, sigy = 3*rows, 3*cols
 
@@ -76,16 +79,17 @@ def kalmanFilter(inPath, sigma, K):
 			Mt1 = autocorrelate(prevFrame, currFrame, St1_, sigx, sigy, sigma)
 
 			#DEBUG
-			print('old = ({}, {})  new = ({}, {})'.format(St0[0], St0[1], Mt1[0], Mt1[1]))
+			# print('old = ({}, {})  new = ({}, {})'.format(St0[0], St0[1], Mt1[0], Mt1[1]))
 
 			# Calculate St1, P1
 			K = np.matmul(np.matmul(P1_, H.T), np.linalg.inv(np.matmul(np.matmul(H, P1_), H.T) + R))
 			P1 = P1_ + np.matmul(np.matmul(K, H), P1_)
+			# P1 = P0
 			St1 = St1_ + np.matmul(K, Mt1 - np.matmul(H, St1_))
-			St1[2], St1[3] = -1*St1[2], -1*St1[3]
+			# St1[2], St1[3] = -1*St1[2], -1*St1[3]
 			# St0[2], St0[3] = St1[2], St1[3]
 			# St1 = np.matmul(A, St0)
-			# print(St1_, St1)
+			# print(St1_, St1, Mt1)
 			# print(P1)
 
 			# Adds to newPoints and P0List
@@ -125,7 +129,7 @@ def autocorrelate(img1, img2, St1_, rows, cols, sigma):
 	if winye > img1.shape[1]: winye = img1.shape[1]
 
 	# Goes through all pixels calcs eigens
-	sumMat = np.full(img1.shape, sys.maxsize, dtype=float)
+	sumMat = np.full(img1.shape, sys.maxsize//4, dtype=float)
 	# coordMat = np.zeros((winxe-winxs, winye-winys, 2), dtype=int)
 	pad1, pad2 = np.pad(img1, [(dist, dist), (dist, dist)], 'constant'), np.pad(img2, [(dist, dist), (dist, dist)], 'constant')
 	cx = 0
@@ -144,6 +148,7 @@ def autocorrelate(img1, img2, St1_, rows, cols, sigma):
 
 	# Finds min coords
 	newx, newy = np.unravel_index(np.argmin(sumMat), sumMat.shape)
+	print(np.argmin(sumMat), newx, newy)
 
 	# Returns new measurement
 	# print(newx, newy)
