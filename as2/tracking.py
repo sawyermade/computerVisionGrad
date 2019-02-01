@@ -2,7 +2,7 @@ import imageio, os, sys, math
 import numpy as np
 from tqdm import tqdm
 
-def kalmanFilter(inPath, sigma, K):
+def kalmanFilter(inPath, sigma, KP):
 	# Distance
 	dist = 3*sigma
 
@@ -17,7 +17,7 @@ def kalmanFilter(inPath, sigma, K):
 	# Gets first frame and gets points
 	prevFrame = imageio.imread(fileList[0], as_gray=True)
 	dx, dy = firstOrderED(prevFrame, sigma)
-	prevPoints, points = autocorrelateEigen(dx, dy, sigma, K)
+	prevPoints, points = autocorrelateEigen(dx, dy, sigma, KP)
 	prevPoints = [(p[0], p[1], 0, 0) for p in prevPoints]
 
 	imageio.imwrite('eigen0.png', points)
@@ -51,15 +51,22 @@ def kalmanFilter(inPath, sigma, K):
 	])
 
 	# Make initial P0 array
-	P0List = np.ndarray((K, 4, 4))
-	for i in range(K):
+	P0List = np.ndarray((KP, 4, 4))
+	for i in range(KP):
 		P0List[i] = np.copy(P00)
 	# print(P0List)
 
 	# Goes through rest of images
-	for imgPath in tqdm(fileList[1:20]):
+	ic = 1
+	for imgPath in tqdm(fileList[1:10]):
 		# Gets image
 		currFrame = imageio.imread(imgPath, as_gray=True)
+
+		#DEBUG
+		dx, dy = firstOrderED(currFrame, sigma)
+		pss, ps = autocorrelateEigen(dx, dy, sigma, KP)
+		imageio.imwrite('eigen' + str(ic) + '.png', ps)
+		ic += 1
 
 		# Goes through prevPoints
 		newPoints = []
@@ -91,7 +98,7 @@ def kalmanFilter(inPath, sigma, K):
 			# St1[2], St1[3] = -1*St1[2], -1*St1[3]
 			# St0[2], St0[3] = St1[2], St1[3]
 			# St1 = np.matmul(A, St0)
-			print(St0, St1_, St1, Mt1)
+			# print(St0, St1_, St1, Mt1)
 			# print(P1)
 
 			# Adds to newPoints and P0List
@@ -211,6 +218,7 @@ def autocorrelateEigen(dx, dy, sigma, K):
 
 	# Get top K eigens
 	points = np.zeros(eigenMax.shape, dtype=np.uint8)
+	print(eigenMax.flatten().argsort(), K)
 	xl, yl = np.unravel_index(eigenMax.flatten().argsort()[-K:], eigenMax.shape)
 
 	# Adds top K points
