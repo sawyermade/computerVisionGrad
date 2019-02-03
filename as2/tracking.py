@@ -66,81 +66,6 @@ def autocorrelateEigen(dx, dy, sigma, K):
 	# Return eigen matrix
 	return pointList, points
 
-def autocorrelateEigenUpdate(dx, dy, sigma, K, sx, stx, sy, sty):	
-	# Sigma shit
-	dist = 3 * sigma
-
-
-
-	# Creates eigen array
-	eigen = np.zeros(dx.shape, dtype=float)
-
-	# Creates kernel
-	kern = np.zeros((2*dist+1, 2*dist+1), dtype=float)
-	g = 1.0/2.0/math.pi/sigma**2
-	for i in range(2*dist+1):
-		for j in range(2*dist+1):
-			x, y = i-dist, j-dist
-			kern[i,j] = g*math.exp(-1.0*(x**2 + y**2)/2/sigma**2)
-
-	# Goes through all pixels calcs eigens
-	padx, pady = np.pad(dx, [(dist, dist), (dist, dist)], 'constant'), np.pad(dy, [(dist, dist), (dist, dist)], 'constant')
-	rows, cols = padx.shape
-	# Adds padding and checks bounds
-	sx, stx, sy, sty = sx+dist, stx+dist, sy+dist, sty+dist
-	if sx < dist: sx=dist 
-	if sy < dist: sy=dist
-	if stx > rows-dist: stx=rows-dist
-	if sty > cols-dist: sty=cols-dist 
-	for i in range(sx, stx):
-		for j in range(sy, sty):
-			# Calcs window indices
-			startx, starty = i-dist, j-dist
-			stopx, stopy = i+dist, j+dist
-
-			# Calcs window
-			patchx = padx[startx:stopx+1, starty:stopy+1]
-			try : dxdxsum = np.sum(np.multiply(np.square(padx[startx:stopx+1, starty:stopy+1]), kern))
-			except: print(i, j, startx, stopx, starty, stopy, padx.shape)
-			dydysum = np.sum(np.multiply(np.square(pady[startx:stopx+1, starty:stopy+1]), kern))
-			dxdysum = np.sum(np.multiply(np.multiply(padx[startx:stopx+1, starty:stopy+1], pady[startx:stopx+1, starty:stopy+1]), kern))
-
-			# Calcs eigens
-			summatrix = np.array([[dxdxsum, dxdysum], [dxdysum, dydysum]])
-			eigen[i-dist,j-dist] = np.min(np.linalg.eigvals(summatrix))
-
-	# Finds local max
-	eigenMax = np.copy(eigen)
-	rows, cols = eigen.shape
-	sx, stx, sy, sty = sx-dist, stx-dist, sy-dist, sty-dist
-	for i in range(sx, stx):
-		for j in range(sy, sty):
-			# Sets boundaries
-			startx, starty = i-dist, j-dist
-			stopx, stopy = i+dist, j+dist
-
-			if startx < 0: startx = 0
-			if starty < 0: starty = 0
-			if stopx > rows-1: stopx = rows-1
-			if stopy > cols-1: stopy = cols-1
-
-			# Finds max val in window, checks if current is max
-			maxVal = np.max(eigen[startx:stopx+1, starty:stopy+1])
-			if maxVal > eigen[i,j]: eigenMax[i,j] = 0
-
-	# Get top K eigens
-	points = np.zeros(eigenMax.shape, dtype=np.uint8)
-	xl, yl = np.unravel_index(eigenMax.flatten().argsort()[-K:], eigenMax.shape)
-
-	# Adds top K points
-	pointList = []
-	for x, y in zip(xl, yl):
-		points[x,y] = eigenMax[x,y]
-		pointList.append((x, y))
-
-	# Return eigen matrix
-	return pointList, points
-
 def firstOrderED(img, sigma):
 	# Sigma shit
 	dist = 3 * sigma
@@ -202,7 +127,6 @@ def kalmanFilter(inPath, sigma, KP, outPath='output/'):
 	dx, dy = firstOrderED(prevFrame, sigma)
 	prevPoints, points = autocorrelateEigen(dx, dy, sigma, KP)
 	prevPoints = [(p[0], p[1], 0, 0) for p in prevPoints]
-
 	imageio.imwrite('eigen0.png', points)
 
 	# Models
@@ -341,11 +265,6 @@ def autocorrelate(img1, img2, St0, St1_, sigx, sigy, ui, vi, sigma):
 	# print(kern)
 
 	# Sets up original patch
-	# px1, py1 = St0[:2]
-	# px1, py1 = px1+dist, py1+dist
-	# xa1, ya1 = int(px1-dist), int(py1-dist)
-	# xa2, ya2 = int(px1+dist+1), int(py1+dist+1)
-	# patch1 = pad1[xa1:xa2, ya1:ya2]
 	# Top left corner bounds check
 	px1, py1 = St0[:2]
 	if px1 < 0: px1=0
@@ -354,19 +273,8 @@ def autocorrelate(img1, img2, St0, St1_, sigx, sigy, ui, vi, sigma):
 	if py1 > cols-1: py1=cols-1
 	px1, py1 = px1+dist, py1+dist
 	xa1, ya1 = int(px1-dist), int(py1-dist)
-	# if xa1 < 0: xa1=0
-	# if ya1 < 0: ya1=0
-	# if xa1 > rows-1: xa2=rows-1
-	# if ya1 > cols-1: ya2=cols-1
 	# Bottom right corner bounds check
 	xa2, ya2 = int(px1+dist)+1, int(py1+dist)+1
-	# if xa2 > rows: xa2=rows
-	# if ya2 > cols: ya2=cols
-	# if xa2 < 0: xa1=1
-	# if ya2 < 0: ya1=1
-	# Adjusts to padding
-	# xa1, ya1 = xa1+dist, ya1+dist 
-	# xa2, ya2 = xa2+dist, ya2+dist
 	# Patch1 slice
 	patch1 = pad1[xa1:xa2, ya1:ya2]
 
@@ -407,11 +315,8 @@ def autocorrelate(img1, img2, St0, St1_, sigx, sigy, ui, vi, sigma):
 			patch2 = pad2[i-dist:i+dist+1, j-dist:j+dist+1]
 
 			# Calcs sum
-			# if patch1.shape[0] != 2*dist+1 or patch1.shape[1] != 2*dist+1 or patch2.shape[0] != 2*dist+1 or patch2.shape[1] != 2*dist+1:
-			# 	print(patch1.shape, patch2.shape)
 			diffSquared = np.square(np.subtract(patch1, patch2))
 			sumMat[i-dist, j-dist] = np.sum(np.multiply(diffSquared, kern))
-			# sumMat[i-dist, j-dist] = np.sum(diffSquared)
 
 	# Finds min coords
 	newx, newy = np.unravel_index(np.argmin(sumMat), sumMat.shape)
