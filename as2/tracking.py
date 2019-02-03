@@ -127,7 +127,7 @@ def kalmanFilter(inPath, sigma, KP, outPath='output/'):
 	dx, dy = firstOrderED(prevFrame, sigma)
 	prevPoints, points = autocorrelateEigen(dx, dy, sigma, KP)
 	prevPoints = [(p[0], p[1], 0, 0) for p in prevPoints]
-	imageio.imwrite('eigen0.png', points)
+	# imageio.imwrite('eigen0.png', points)
 
 	# Models
 	A = np.array([
@@ -245,7 +245,8 @@ def kalmanFilter(inPath, sigma, KP, outPath='output/'):
 				io[i,j] = [currFrame[i,j]]*3
 		for p1 in pss2:
 			io[p1[0], p1[1]] = [255, 0, 0]
-		imageio.imwrite('output/{}.png'.format(ic), io)
+
+		imageio.imwrite(os.path.join(outPath, '{}.png'.format(ic)), io)
 		ic += 1
 
 def autocorrelate(img1, img2, St0, St1_, sigx, sigy, ui, vi, sigma):
@@ -327,26 +328,27 @@ def autocorrelate(img1, img2, St0, St1_, sigx, sigy, ui, vi, sigma):
 if __name__ == '__main__':
 	# Args
 	inPath = sys.argv[1]
-	sigma = int(sys.argv[2])
-	K = int(sys.argv[3])
+	outPath = sys.argv[2]
+	sigma = int(sys.argv[3])
+	K = int(sys.argv[4])
 
 	# # Opens image
-	# img = imageio.imread(inFile, as_gray=True)
+	img = imageio.imread(inPath, as_gray=True)
 
 	# # Runs 1st order edge detection
-	# dx, dy = firstOrderED(img, sigma)
+	dx, dy = firstOrderED(img, sigma)
 
 	# # Saves
 	# imageio.imwrite('dx.png', dx)
 	# imageio.imwrite('dy.png', dy)
 
 	# Gets eigen vectors
-	# eigen = autocorrelateEigen(dx, dy, sigma, K)
-	# imageio.imwrite('eigen0.png', eigen)
+	pts, eigen = autocorrelateEigen(dx, dy, sigma, K)
+	imageio.imwrite('eigen0.png', eigen)
 
 	# img = imageio.imread('moon_frames/frame1.png', as_gray=True)
 	# dx, dy = firstOrderED(img, sigma)
 	# eigen = autocorrelate(dx, dy, sigma, K)
 	# imageio.imwrite('eigen1.png', eigen)
 
-	kalmanFilter(inPath, sigma, K)
+	# kalmanFilter(inPath, sigma, K, outPath)
