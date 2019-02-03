@@ -238,6 +238,12 @@ def kalmanFilter(inPath, sigma, KP, outPath='output/'):
 		[0, 0, 1, 0],
 		[0, 0, 0, 1]
 	])
+	AP = np.array([
+		[.65, 0, 1, 0],
+		[0, .65, 0, 1],
+		[0, 0, .65, 0],
+		[0, 0, 0, .65]
+	])
 
 	# Make initial P0 array
 	P0List = np.ndarray((KP, 4, 4), dtype=float)
