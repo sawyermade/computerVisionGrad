@@ -333,22 +333,22 @@ if __name__ == '__main__':
 	K = int(sys.argv[4])
 
 	# # Opens image
-	img = imageio.imread(inPath, as_gray=True)
+	# img = imageio.imread(inPath, as_gray=True)
 
 	# # Runs 1st order edge detection
-	dx, dy = firstOrderED(img, sigma)
+	# dx, dy = firstOrderED(img, sigma)
 
 	# # Saves
 	# imageio.imwrite('dx.png', dx)
 	# imageio.imwrite('dy.png', dy)
 
 	# Gets eigen vectors
-	pts, eigen = autocorrelateEigen(dx, dy, sigma, K)
-	imageio.imwrite('eigen0.png', eigen)
+	# pts, eigen = autocorrelateEigen(dx, dy, sigma, K)
+	# imageio.imwrite('eigen0.png', eigen)
 
 	# img = imageio.imread('moon_frames/frame1.png', as_gray=True)
 	# dx, dy = firstOrderED(img, sigma)
 	# eigen = autocorrelate(dx, dy, sigma, K)
 	# imageio.imwrite('eigen1.png', eigen)
 
-	# kalmanFilter(inPath, sigma, K, outPath)
+	kalmanFilter(inPath, sigma, K, outPath)
