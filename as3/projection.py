@@ -136,10 +136,13 @@ def calcHomography(fromCoords, toCoords):
 	if DEBUG: print('Complete.')
 	return H
 
-def map2img(fromImg, toImg, toPoints, H):
+def map2img(fromImg, toImg, toPoints, fromCoords, H):
 	if DEBUG: print('Map2Img Started...')
 	newImg = np.copy(toImg)
 	rows, cols = fromImg.shape[:2]
+	minx, maxx = min(fromCoords, key=lambda x: x[0])[0], max(fromCoords, key=lambda x: x[0])[0]
+	miny, maxy = min(fromCoords, key=lambda x: x[1])[1], max(fromCoords, key=lambda x: x[1])[1]
+	print(minx, maxx, miny, maxy)
 	for p in toPoints:
 		x, y = p
 		# print(x, y)
@@ -154,10 +157,10 @@ def map2img(fromImg, toImg, toPoints, H):
 		xi, yi = xv[0][0]/xv[2][0], xv[1][0]/xv[2][0]
 		xi, yi = int(xi)*2, int(yi)*2
 		# xi, yi = int(xi), int(yi)
-		if xi < 0: xi=0
-		if yi < 0: yi=0
-		if xi > cols-1: xi=cols-1
-		if yi > rows-1: yi=rows-1
+		if xi < minx: xi=minx
+		if yi < miny: yi=miny
+		if xi > maxx: xi=maxx
+		if yi > maxy: yi=maxy
 
 		try:
 			# newImg[y, x] = fromImg[2*yi, 2*xi]
@@ -232,7 +235,7 @@ if __name__ == '__main__':
 	H = calcHomography(fromCoords, toCoords)
 
 	# Map to image
-	newImg = map2img(fromImg, toImg, toPoints, H)
+	newImg = map2img(fromImg, toImg, toPoints, fromCoords, H)
 	# newImg = map2img(fromImg, toImg, fromPoints, H)
 
 	# Write new img
