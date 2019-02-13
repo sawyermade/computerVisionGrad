@@ -52,8 +52,8 @@ def insidePolygon(img, coords):
 def calcHomography(fromCoords, toCoords):
 	if DEBUG: print('Calc Homography Started...')
 	H = np.zeros((3,3), dtype=float)
-	H[0, 0] = 1
-	H[1, 1] = 1
+	H[0, 0] = 0
+	H[1, 1] = 0
 	H[2, 2] = 1
 	# H = np.full((3, 3), 1, dtype=float)
 
@@ -62,11 +62,11 @@ def calcHomography(fromCoords, toCoords):
 	predictedPts = []
 	while(flag):
 		# print(i, H)
-		Asum, Bsum = np.zeros((8,8)), np.zeros((8,1))
+		Asum, Bsum, ADsum = np.zeros((8,8)), np.zeros((8,1)), np.zeros((8,8))
 		for pf, pt in zip(fromCoords, toCoords):
 
 			x, y = pt
-			xi, yi = pf
+			xi, yi = pf 
 
 			v = np.array([
 				[x],
@@ -74,7 +74,9 @@ def calcHomography(fromCoords, toCoords):
 				[1]
 			])
 			xv = np.matmul(H, v)
-			xg, yg = xv[0][0]/xv[2][0], xv[1][0]/xv[2][0]
+			d = 1.0/xv[2,0]
+			xg, yg = xv[0,0]*d, xv[1,0]*d 
+			# xg, yg = xv[0,0], xv[1,0]
 
 			J = np.array([
 				[x, y, 1, 0, 0, 0, -1.0*xg*x, -1.0*xg*y],
@@ -85,6 +87,7 @@ def calcHomography(fromCoords, toCoords):
 				[xi-xg],
 				[yi-yg]
 			])
+			# ri *= D
 			# # J *= 1.0/d
 
 			# # J = np.array([
@@ -97,9 +100,12 @@ def calcHomography(fromCoords, toCoords):
 			# # ])
 
 			
-
+			# D = 1.0/xv[2,0]	
 			A = np.matmul(J.T, J)
+			# AD = np.diagonal(A)
+			# print(A)
 			Asum += A
+			# ADsum += AD
 
 			
 			B = np.matmul(J.T, ri)
@@ -110,6 +116,7 @@ def calcHomography(fromCoords, toCoords):
 			# H += DH.reshape((3,3))
 
 		# Updates
+		# AD = np.diagonal(Asum) * 1.0/np.sum(H[2])
 		DH = np.linalg.lstsq(Asum, Bsum, rcond=None)[0]
 		DH = np.append(DH, 1)
 		H += DH.reshape((3,3))
@@ -119,7 +126,7 @@ def calcHomography(fromCoords, toCoords):
 		# 	flag = False
 
 		newPts = testPoints(fromCoords, toCoords, H)
-		if newPts == predictedPts:
+		if newPts == predictedPts or numIters > 1000:
 			flag = False
 		predictedPts = newPts
 		
@@ -132,6 +139,7 @@ def calcHomography(fromCoords, toCoords):
 def map2img(fromImg, toImg, toPoints, H):
 	if DEBUG: print('Map2Img Started...')
 	newImg = np.copy(toImg)
+	rows, cols = fromImg.shape[:2]
 	for p in toPoints:
 		x, y = p
 		# print(x, y)
@@ -144,15 +152,23 @@ def map2img(fromImg, toImg, toPoints, H):
 		xv = np.matmul(H, v)
 
 		xi, yi = xv[0][0]/xv[2][0], xv[1][0]/xv[2][0]
-		xi, yi = int(xi), int(yi)
+		xi, yi = int(xi)*2, int(yi)*2
+		# xi, yi = int(xi), int(yi)
+		if xi < 0: xi=0
+		if yi < 0: yi=0
+		if xi > cols-1: xi=cols-1
+		if yi > rows-1: yi=rows-1
 
 		try:
-			newImg[y, x] = fromImg[2*yi, 2*xi]
+			# newImg[y, x] = fromImg[2*yi, 2*xi]
+			# newImg[y, x] = fromImg[yi, xi]
+			newImg[y, x] = fromImg[yi, xi]
 		except:
 			# print(x, y, xi, yi)
 			pass
 
 	#
+	# print(H[2,2])
 	if DEBUG: print('Complete.')
 	return newImg
 
@@ -210,13 +226,14 @@ if __name__ == '__main__':
 	toImg, toCoords = parseConfig(toConfig)
 
 	# Finds points within toImg polygon
-	toPoints = insidePolygon(toImg, toCoords)
+	toPoints, fromPoints = insidePolygon(toImg, toCoords), insidePolygon(fromImg, fromCoords)
 	
 	# Gets homography matrix
 	H = calcHomography(fromCoords, toCoords)
 
 	# Map to image
 	newImg = map2img(fromImg, toImg, toPoints, H)
+	# newImg = map2img(fromImg, toImg, fromPoints, H)
 
 	# Write new img
 	imageio.imwrite(outPath, newImg)
