@@ -203,7 +203,7 @@ if __name__ == '__main__':
 	if len(sys.argv) > 3:
 		outPath = sys.argv[3]
 	else:
-		outPath = 'out.png'
+		outPath = 'output/out.png'
 
 	# Parses coords
 	fromImg, fromCoords = parseConfig(fromConfig)
