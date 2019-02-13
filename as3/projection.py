@@ -80,7 +80,6 @@ def calcHomography(fromCoords, toCoords):
 				[0, 0, 0, x, y, 1, -1.0*yg*x, -1.0*yg*y]
 			])
 
-
 			ri = np.array([
 				[xi-xg],
 				[yi-yg]
@@ -114,16 +113,15 @@ def calcHomography(fromCoords, toCoords):
 		DH = np.append(DH, 1)
 		HP = np.copy(H)
 		H += DH.reshape((3,3))
-		
-		# if numIters % 100 == 0:
-		# 	print(DH)
 
 		numIters += 1
-		if numIters > 1000000:
-			flag = False
+		# if numIters > 1000000:
+		# 	flag = False
+		if np.array_equal(H, HP):
+			flag = false
 		# if DEBUG: testOgPoints(fromCoords, toCoords, H)
 
-	print('numIters =', numIters)
+	if DEBUG: print('numIters =', numIters)
 	if DEBUG: testOgPoints(fromCoords, toCoords, H)
 	if DEBUG: print('Complete.')
 	return H
