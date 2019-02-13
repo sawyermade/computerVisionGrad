@@ -59,6 +59,7 @@ def calcHomography(fromCoords, toCoords):
 
 	numIters = 0
 	flag = True
+	predictedPts = []
 	while(flag):
 		# print(i, H)
 		Asum, Bsum = np.zeros((8,8)), np.zeros((8,1))
@@ -117,9 +118,12 @@ def calcHomography(fromCoords, toCoords):
 		numIters += 1
 		# if numIters > 1000000:
 		# 	flag = False
-		if np.array_equal(H, HP):
-			flag = false
-		# if DEBUG: testOgPoints(fromCoords, toCoords, H)
+
+		newPts = testOgPoints(fromCoords, toCoords, H)
+		if newPts == predictedPts:
+			flag = False
+		predictedPts = newPts
+		
 
 	if DEBUG: print('numIters =', numIters)
 	if DEBUG: testOgPoints(fromCoords, toCoords, H)
@@ -154,7 +158,7 @@ def map2img(fromImg, toImg, toPoints, H):
 	return newImg
 
 def testOgPoints(fromCoords, toCoords, H):
-
+	predictedPts = []
 	for pf, pt in zip(fromCoords, toCoords):
 		x, y = pt
 
@@ -168,9 +172,11 @@ def testOgPoints(fromCoords, toCoords, H):
 
 		xi, yi = xv[0][0]/xv[2][0], xv[1][0]/xv[2][0]
 		xi, yi = int(xi), int(yi)
+		predictedPts.append((xi, yi))
+		if DEBUG: print(pf[0], pf[1], xi, yi)
+	if DEBUG: print()
+	return predictedPts
 
-		print(pf[0], pf[1], xi, yi)
-	print()
 
 if __name__ == '__main__':
 	# Gets info
