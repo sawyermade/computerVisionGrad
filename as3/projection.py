@@ -127,6 +127,7 @@ def calcHomography(fromCoords, toCoords):
 	return H
 
 def map2img(fromImg, toImg, toPoints, H):
+	if DEBUG: print('Map2Img Started...')
 	newImg = np.copy(toImg)
 	for p in toPoints:
 		x, y = p
@@ -148,6 +149,8 @@ def map2img(fromImg, toImg, toPoints, H):
 			# print(x, y, xi, yi)
 			pass
 
+	#
+	if DEBUG: print('Complete.')
 	return newImg
 
 def testOgPoints(fromCoords, toCoords, H):
