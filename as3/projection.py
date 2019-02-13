@@ -112,14 +112,13 @@ def calcHomography(fromCoords, toCoords):
 		# Updates
 		DH = np.linalg.lstsq(Asum, Bsum, rcond=None)[0]
 		DH = np.append(DH, 1)
-		HP = np.copy(H)
 		H += DH.reshape((3,3))
 
 		numIters += 1
 		# if numIters > 1000000:
 		# 	flag = False
 
-		newPts = testOgPoints(fromCoords, toCoords, H)
+		newPts = testPoints(fromCoords, toCoords, H)
 		if newPts == predictedPts:
 			flag = False
 		predictedPts = newPts
@@ -174,7 +173,26 @@ def testOgPoints(fromCoords, toCoords, H):
 		xi, yi = int(xi), int(yi)
 		predictedPts.append((xi, yi))
 		if DEBUG: print(pf[0], pf[1], xi, yi)
-	if DEBUG: print()
+	# if DEBUG: print()
+	return predictedPts
+
+def testPoints(fromCoords, toCoords, H):
+	predictedPts = []
+	for pf, pt in zip(fromCoords, toCoords):
+		x, y = pt
+
+		v = np.array([
+			[x],
+			[y],
+			[1]
+		])
+
+		xv = np.matmul(H, v)
+
+		xi, yi = xv[0][0]/xv[2][0], xv[1][0]/xv[2][0]
+		xi, yi = round(xi, 4), round(yi, 4)
+		predictedPts.append((xi, yi))
+
 	return predictedPts
 
 
