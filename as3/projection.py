@@ -49,13 +49,26 @@ def insidePolygon(img, coords):
 	if DEBUG: print('Complete.')
 	return pointList
 
+def convertHv(Hv):
+	V = np.array([
+		[1, 0, 0],
+		[0, 1, 0],
+		[0, 0, 1]
+	])
+
+	H = np.append(Hv, 0)
+	H = H.reshape((3,3))
+
+	return V + H
+
 def calcHomography(fromCoords, toCoords):
 	if DEBUG: print('Calc Homography Started...')
-	H = np.zeros((3,3), dtype=float)
-	H[0, 0] = 0
-	H[1, 1] = 0
-	H[2, 2] = 1
+	# H = np.zeros((3,3), dtype=float)
+	# H[0, 0] = 0
+	# H[1, 1] = 0
+	# H[2, 2] = 1
 	# H = np.full((3, 3), 1, dtype=float)
+	Hv = np.zeros((8), dtype=float)
 
 	numIters = 0
 	flag = True
@@ -67,6 +80,8 @@ def calcHomography(fromCoords, toCoords):
 
 			x, y = pt
 			xi, yi = pf 
+
+			H = convertHv(Hv)
 
 			v = np.array([
 				[x],
@@ -81,8 +96,12 @@ def calcHomography(fromCoords, toCoords):
 			J = np.array([
 				[x, y, 1, 0, 0, 0, -1.0*xg*x, -1.0*xg*y],
 				[0, 0, 0, x, y, 1, -1.0*yg*x, -1.0*yg*y]
-			])
+			]) * d
 
+			# J = np.array([
+			# 	[x, y, 1, 0, 0, 0, -1.0*xi*x, -1.0*xi*y],
+			# 	[0, 0, 0, x, y, 1, -1.0*yi*x, -1.0*yi*y]
+			# ]) * d
 			ri = np.array([
 				[xi-xg],
 				[yi-yg]
@@ -117,16 +136,19 @@ def calcHomography(fromCoords, toCoords):
 
 		# Updates
 		# AD = np.diagonal(Asum) * 1.0/np.sum(H[2])
-		DH = np.linalg.lstsq(Asum, Bsum, rcond=None)[0]
-		DH = np.append(DH, 1)
-		H += DH.reshape((3,3))
+		Ad = np.diagonal(Asum)
+		Hd = np.linalg.lstsq(Asum + 0.1*Ad, Bsum, rcond=None)[0].reshape(8)
+		# DH = np.append(DH, 1)
+		# print(Hd.shape)
+		Hv += Hd
 
 		numIters += 1
 		# if numIters > 1000000:
 		# 	flag = False
 
+		H = convertHv(Hv)
 		newPts = testPoints(fromCoords, toCoords, H)
-		if newPts == predictedPts or numIters > 1000:
+		if newPts == predictedPts or numIters > 10000:
 			flag = False
 		predictedPts = newPts
 		
@@ -155,8 +177,8 @@ def map2img(fromImg, toImg, toPoints, fromCoords, H):
 		xv = np.matmul(H, v)
 
 		xi, yi = xv[0][0]/xv[2][0], xv[1][0]/xv[2][0]
-		xi, yi = int(xi)*2, int(yi)*2
-		# xi, yi = int(xi), int(yi)
+		# xi, yi = int(xi)*2, int(yi)*2
+		xi, yi = int(xi), int(yi)
 		if xi < minx: xi=minx
 		if yi < miny: yi=miny
 		if xi > maxx: xi=maxx
@@ -233,6 +255,7 @@ if __name__ == '__main__':
 	
 	# Gets homography matrix
 	H = calcHomography(fromCoords, toCoords)
+	print('H = \n', H)
 
 	# Map to image
 	newImg = map2img(fromImg, toImg, toPoints, fromCoords, H)
