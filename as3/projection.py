@@ -61,7 +61,7 @@ def convertHv(Hv):
 
 	return V + H
 
-def calcHomography(fromCoords, toCoords):
+def calcHomography(fromCoords, toCoords, damp):
 	if DEBUG: print('Calc Homography Started...')
 	# H = np.zeros((3,3), dtype=float)
 	# H[0, 0] = 0
@@ -137,7 +137,7 @@ def calcHomography(fromCoords, toCoords):
 		# Updates
 		# AD = np.diagonal(Asum) * 1.0/np.sum(H[2])
 		Ad = np.diagonal(Asum)
-		Hd = np.linalg.lstsq(Asum + 0.1*Ad, Bsum, rcond=None)[0].reshape(8)
+		Hd = np.linalg.lstsq(Asum + damp*Ad, Bsum, rcond=None)[0].reshape(8)
 		# DH = np.append(DH, 1)
 		# print(Hd.shape)
 		Hv += Hd
@@ -148,7 +148,7 @@ def calcHomography(fromCoords, toCoords):
 
 		H = convertHv(Hv)
 		newPts = testPoints(fromCoords, toCoords, H)
-		if newPts == predictedPts or numIters > 10000:
+		if newPts == predictedPts:
 			flag = False
 		predictedPts = newPts
 		
@@ -161,13 +161,11 @@ def calcHomography(fromCoords, toCoords):
 def map2img(fromImg, toImg, toPoints, fromCoords, H):
 	if DEBUG: print('Map2Img Started...')
 	newImg = np.copy(toImg)
-	rows, cols = fromImg.shape[:2]
 	minx, maxx = min(fromCoords, key=lambda x: x[0])[0], max(fromCoords, key=lambda x: x[0])[0]
 	miny, maxy = min(fromCoords, key=lambda x: x[1])[1], max(fromCoords, key=lambda x: x[1])[1]
-	print(minx, maxx, miny, maxy)
+	# print(minx, maxx, miny, maxy)
 	for p in toPoints:
 		x, y = p
-		# print(x, y)
 		v = np.array([
 			[x],
 			[y],
@@ -176,17 +174,13 @@ def map2img(fromImg, toImg, toPoints, fromCoords, H):
 
 		xv = np.matmul(H, v)
 
-		xi, yi = xv[0][0]/xv[2][0], xv[1][0]/xv[2][0]
-		# xi, yi = int(xi)*2, int(yi)*2
-		xi, yi = int(xi), int(yi)
+		xi, yi = int(xv[0][0]/xv[2][0]), int(xv[1][0]/xv[2][0])
 		if xi < minx: xi=minx
 		if yi < miny: yi=miny
 		if xi > maxx: xi=maxx
 		if yi > maxy: yi=maxy
 
 		try:
-			# newImg[y, x] = fromImg[2*yi, 2*xi]
-			# newImg[y, x] = fromImg[yi, xi]
 			newImg[y, x] = fromImg[yi, xi]
 		except:
 			# print(x, y, xi, yi)
@@ -245,6 +239,10 @@ if __name__ == '__main__':
 		outPath = sys.argv[3]
 	else:
 		outPath = 'output/out.png'
+	if len(sys.argv) > 4:
+		damp = float(sys.argv[4])
+	else:
+		damp = 0.0
 
 	# Parses coords
 	fromImg, fromCoords = parseConfig(fromConfig)
@@ -254,7 +252,7 @@ if __name__ == '__main__':
 	toPoints, fromPoints = insidePolygon(toImg, toCoords), insidePolygon(fromImg, fromCoords)
 	
 	# Gets homography matrix
-	H = calcHomography(fromCoords, toCoords)
+	H = calcHomography(fromCoords, toCoords, damp)
 	print('H = \n', H)
 
 	# Map to image
