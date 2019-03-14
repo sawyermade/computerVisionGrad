@@ -1,0 +1,7 @@
+Pixel size = 1.4 um
+Aperature = f/1.8
+MegaPixels = 12.2 MP
+Focal Length = 4.459 mm
+Sensor Size = 1/2.6 in, 5.5 mm x 4.1 mm
+Dimensions = 70 x 146 x 8 mm
+Lens = Non-zoom, 27 mm
