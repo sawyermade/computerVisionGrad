@@ -5,3 +5,5 @@ Focal Length = 4.459 mm
 Sensor Size = 1/2.6 in, 5.5 mm x 4.1 mm
 Dimensions = 70 x 146 x 8 mm
 Lens = Non-zoom, 27 mm
+pixel width = 4032
+pixel height = 3024

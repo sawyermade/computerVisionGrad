@@ -575,6 +575,18 @@ void  tsai3D_define_camera_parameters(int CameraModel,
 		cp->sx = 1.0;           /* []           */
 		break;
 
+	case GP2: 
+		cp->Ncx = 642;               /* [sel]        */
+		cp->Nfx = 640;               /* [pix]        */
+		cp->dx = 0.008;              /* [mm/sel]     */
+		cp->dy = 0.008;              /* [mm/sel]     */
+		cp->dpx = cp->dx * cp->Ncx / cp->Nfx;   /* [mm/pix]     */
+		cp->dpy = cp->dy;             /* [mm/pix]     */
+		cp->Cx = 640 / 2;            /* [pix]        */
+		cp->Cy = 480 / 2;            /* [pix]        */
+		cp->sx = 1.0;           /* []           */
+		break;
+
 	default:
 		printf("\nInvalid camera selection");
 	}

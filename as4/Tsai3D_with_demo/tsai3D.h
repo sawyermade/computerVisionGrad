@@ -36,6 +36,8 @@ extern "C" {
 #define PINHOLE_CAMERA					8
 #define NEW_CAMERA							9
 
+#define GP2 10
+
 /**************************************************************************\
 * Camera parameters are usually the fixed parameters of the given camera 	*
 * system, typically obtained from manufacturers specifications.						*
