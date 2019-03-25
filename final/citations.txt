@@ -1,0 +1,82 @@
+% DenseFusion
+@article{wang2019densefusion,
+  title={DenseFusion: 6D Object Pose Estimation by Iterative Dense Fusion},
+  author={Wang, Chen and Xu, Danfei and Zhu, Yuke and Mart{\'\i}n-Mart{\'\i}n, Roberto and Lu, Cewu and Fei-Fei, Li and Savarese, Silvio},
+  booktitle={Computer Vision and Pattern Recognition (CVPR)},
+  year={2019}
+}
+% https://github.com/j96w/DenseFusion
+
+% Mask R-CNN
+@article{He_2017,
+   title={Mask R-CNN},
+   ISBN={9781538610329},
+   url={http://dx.doi.org/10.1109/ICCV.2017.322},
+   DOI={10.1109/iccv.2017.322},
+   journal={2017 IEEE International Conference on Computer Vision (ICCV)},
+   publisher={IEEE},
+   author={He, Kaiming and Gkioxari, Georgia and Dollar, Piotr and Girshick, Ross},
+   year={2017},
+   month={Oct}
+}
+% https://github.com/matterport/Mask_RCNN
+@misc{matterport_maskrcnn_2017,
+  title={Mask R-CNN for object detection and instance segmentation on Keras and TensorFlow},
+  author={Waleed Abdulla},
+  year={2017},
+  publisher={Github},
+  journal={GitHub repository},
+  howpublished={\url{https://github.com/matterport/Mask_RCNN}},
+}
+
+% Faster R-CNN
+@article{Ren_2017,
+   title={Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks},
+   volume={39},
+   ISSN={2160-9292},
+   url={http://dx.doi.org/10.1109/TPAMI.2016.2577031},
+   DOI={10.1109/tpami.2016.2577031},
+   number={6},
+   journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+   publisher={Institute of Electrical and Electronics Engineers (IEEE)},
+   author={Ren, Shaoqing and He, Kaiming and Girshick, Ross and Sun, Jian},
+   year={2017},
+   month={Jun},
+   pages={1137–1149}
+}
+% https://github.com/rbgirshick/py-faster-rcnn
+
+% Detectron
+% https://research.fb.com/downloads/detectron/
+% https://github.com/facebookresearch/Detectron
+@misc{Detectron2018,
+  author =       {Ross Girshick and Ilija Radosavovic and Georgia Gkioxari and
+                  Piotr Doll\'{a}r and Kaiming He},
+  title =        {Detectron},
+  howpublished = {\url{https://github.com/facebookresearch/detectron}},
+  year =         {2018}
+}
+
+% GG-CNN
+@article{morrison2018closing, 
+	title={Closing the Loop for Robotic Grasping: A Real-time, Generative Grasp Synthesis Approach}, 
+	author={Morrison, Douglas and Corke, Peter and Leitner, Jürgen}, 
+	booktitle={Robotics: Science and Systems (RSS)}, 
+	year={2018} 
+}
+% https://github.com/dougsm/ggcnn
+
+% RetinaNet
+@article{Lin_2017,
+   title={Focal Loss for Dense Object Detection},
+   ISBN={9781538610329},
+   url={http://dx.doi.org/10.1109/ICCV.2017.324},
+   DOI={10.1109/iccv.2017.324},
+   journal={2017 IEEE International Conference on Computer Vision (ICCV)},
+   publisher={IEEE},
+   author={Lin, Tsung-Yi and Goyal, Priya and Girshick, Ross and He, Kaiming and Dollar, Piotr},
+   year={2017},
+   month={Oct}
+}
+
+
