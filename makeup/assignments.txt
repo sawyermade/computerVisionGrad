@@ -1,0 +1,7 @@
+1. Cross Ratio: See attached image (Cross Ratio Proof.png). Prove the claim in that statement.
+
+2. Projective Jacobian: See attached (Jacobian.png). Derive Equation 6.20 given the points in 6.19.
+
+3. Unravel Essential Matrix: The essential matrix can be represented as the cross product of two matrices, which can further be reduced down to the Matrix Multiplication form in the attached figure (Essential Matrix.png). Derive the final form of the equation.
+
+4. Fundamental Matrix: Derive the relationship between two corresponding image points from two different cameras when they are uncalibrated.
