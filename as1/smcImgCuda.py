@@ -360,7 +360,8 @@ if __name__ == '__main__':
 
 		# Run kernel
 		if grayscale:
-			msCudaNaiveGS[bgrid, tpb](imgCuda, newImgCuda)
+			# msCudaNaiveGS[bgrid, tpb](imgCuda, newImgCuda)
+			msCudaNaiveGS[bgrid, tpb](imgCuda, newImgCuda, hc, hd, m, sdc, sdd)
 		else:
 			msCudaNaiveLAB[bgrid, tpb](imgCuda, newImgCuda, hc, hd, m, sdc, sdd)
 
