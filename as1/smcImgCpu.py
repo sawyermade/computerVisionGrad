@@ -32,7 +32,7 @@ def meanshift_gs(img_in, img_out, steps, hr, hs, M, sdr, sds, img_og=None):
 		img_in = np.copy(img_out)
 		# print()
 
-	return img_out
+	return img_in
 
 def main(input_path='images/shapes_128.png', out_path='output/shapes_128_test.png', steps=5, hr=8, hs=7, M=10, sdr=3, sds=3, grayscale=True):
 	# Opens image
