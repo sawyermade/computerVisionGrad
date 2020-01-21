@@ -282,7 +282,7 @@ def msCudaNaiveLAB(img, newImg, hc, hd, m, sdc, sdd):
 			newImg[i,j,0] = meanSuml / meanTotal
 			newImg[i,j,1] = meanSuma / meanTotal
 			newImg[i,j,2] = meanSumb / meanTotal
-	
+
 # Main
 if __name__ == '__main__':
 	# Check args
@@ -367,6 +367,7 @@ if __name__ == '__main__':
 
 		# Copy back
 		newImg = newImgCuda.copy_to_host()
+		print(newImg)
 
 	# # Check vars
 	# skip = 1000
