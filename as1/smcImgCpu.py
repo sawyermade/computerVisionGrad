@@ -63,7 +63,7 @@ def meanshift_color(img_og, steps, hr, hs, M, sdr, sds):
 
 	return img_out
 
-def main(input_path='images/baboon_128.png', out_path='output/baboon_128_output_40.png', steps=5, hr=8, hs=7, M=40, sdr=3, sds=3, grayscale=False):
+def main(input_path='images/shapes_128.png', out_path='output/shapes_128_output_40.png', steps=5, hr=8, hs=7, M=40, sdr=3, sds=3, grayscale=True):
 	# Opens image
 	img_og = imageio.imread(input_path)
 

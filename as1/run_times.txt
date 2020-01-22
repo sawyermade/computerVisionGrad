@@ -1,4 +1,6 @@
-shapes 64x42 ?
-shapes 128x84 7 minutes
-baboon 64x64 ?
-baboon 128x128 1:40:29?
+shapes 64x42 00:00:23
+shapes 128x84 00:05:49
+baboon 64x64 0:07:59
+baboon 128x128 2:06:24
+building 64x64 00:00:56
+building 128x128 00:12:38
