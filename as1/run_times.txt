@@ -4,3 +4,5 @@ baboon 64x64 0:07:59
 baboon 128x128 2:06:24
 building 64x64 00:00:56
 building 128x128 00:12:38
+lena 64x64 00:08:12
+lena 128x128 02:05:14
