@@ -67,7 +67,7 @@ def autocorrelateEigen(dx, dy, sigma, K):
 	return pointList, points
 
 def firstOrderED(img, sigma):
-	# Sigma shit
+	# Sigma stuff
 	dist = 3 * sigma
 
 	# Creates kernel
