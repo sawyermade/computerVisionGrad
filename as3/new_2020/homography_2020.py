@@ -49,13 +49,131 @@ def projection_transform(img_src, img_tgt, pts_src, pts_tgt, H):
 	# Returns new target img
 	return img_tgt
 
+def init_homography(pts_src, pts_tgt):
+	# Creates homogeneous coord matrices
+	XS = np.asarray(pts_src).T
+	XS = np.append(XS, [[1]*len(pts_src)], axis=0).astype(float)
+
+	XT = np.asarray(pts_tgt).T
+	XT = np.append(XT, [[1]*len(pts_tgt)], axis=0).astype(float)
+
+	# Calc delta Z and delta X
+	z_23 = np.asarray([[1, 0, 0], [0, 1, 0]])
+	DZ = np.matmul(z_23, XT - XS)
+	DX = np.append(np.vstack(DZ[0]), np.vstack(DZ[1]), axis=0)
+
+	# P1 and P2 constants
+	P1 = np.asarray([
+		[0, 0, 1, 0, 0, 0], 
+		[0, 0, 0, 1, 0, 0], 
+		[1, 0, 0, 0, 0, 0]
+	])
+
+	P2 = np.asarray([
+		[0, 0, 0, 0, 1, 0], 
+		[0, 0, 0, 0, 0, 1], 
+		[0, 1, 0, 0, 0, 0]
+	])
+
+	# Calcs jacobians
+	J1 = np.matmul(XT.T, P1)
+	J2 = np.matmul(XT.T, P2)
+	J = np.vstack([J1, J2])
+
+	# Calcs A matrix
+	A = np.matmul(J.T, J)
+
+	# Calcs b vector
+	b = np.matmul(J.T, DX)
+
+	# Calcs p vector
+	lam = 0.0
+	p = np.matmul(np.linalg.inv(A + lam * np.diag(np.diag(A))), b)
+	p = np.append(p, np.vstack([0, 0]), axis=0)
+
+	return p, XS, XT
+
 def calc_homography(pts_src, pts_tgt):
 	# Sets up initial p
-	p = np.vstack([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
+	# p = np.vstack([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
+	p, XS, XT = init_homography(pts_src, pts_tgt)
 	sum_r, sum_r_prev = 100000000000, 1000000000001
+	count = 0
 
 	# Iterates until low residual
 	while sum_r < sum_r_prev:
+		# Sets sum_prev
+		sum_r_prev = sum_r
+
+		# Creates H matrix
+		H = np.append(p, 1).reshape((3,3))
+
+		# Creates estimated X matrix
+		XE = np.matmul(H, XT)
+		D = np.matmul(XE.T, np.vstack([0, 0, 1])).T
+		XE = XE / D
+
+		# Calc delta Z and delta X
+		z_23 = np.asarray([[1, 0, 0], [0, 1, 0]])
+		DZ = np.matmul(z_23, XS - XE)
+		DX = np.append(np.vstack(DZ[0]), np.vstack(DZ[1]), axis=0)
+
+		# P1 and P2 constants
+		P1T = np.asarray([
+			[1, 0, 0, 0, 0, 0, 1, 0], 
+			[0, 1, 0, 0, 0, 0, 0, 1], 
+			[0, 0, 1, 0, 0, 0, 0, 0]
+		])
+
+		P2T = np.asarray([
+			[0, 0, 0, 1, 0, 0, 1, 0], 
+			[0, 0, 0, 0, 1, 0, 0, 1], 
+			[0, 0, 0, 0, 0, 1, 0, 0]
+		])
+
+		PXE = np.asarray([
+			[0, 0, 0, 0, 0, 0, -1.0, -1.0], 
+			[0, 0, 0, 0, 0, 0, 0, 0],
+			[1, 1, 1, 1, 1, 1, 0, 0]
+		])
+
+		PYE = np.asarray([
+			[0, 0, 0, 0, 0, 0, 0, 0], 
+			[0, 0, 0, 0, 0, 0, -1.0, -1.0],
+			[1, 1, 1, 1, 1, 1, 0, 0]
+		])
+
+		# J1, XE 
+		J1 = np.matmul(XT.T, P1T)
+		J1 *= np.matmul(XE.T, PXE)
+		J1 /= D.T
+
+		# J2, YE
+		J2 = np.matmul(XT.T, P2T)
+		J2 *= np.matmul(XE.T, PYE)
+		J2 /= D.T 
+
+		# Create Jacobian vstack
+		J = np.vstack([J1, J2])
+
+		# Calc A matrix
+		A = np.matmul(J.T, J)
+
+		# Calc B matrix
+		b = np.matmul(J.T, DX)
+
+		# Sets rsum
+		sum_r = np.sum(DX**2)
+
+		# Calcs delta p vector
+		lam = 0.0
+		dp = np.matmul(np.linalg.inv(A + lam * np.diag(np.diag(A))), b)
+		p += dp
+		count += 1
+
+		'''
+		# CODE WITH FORLOOPS
+
 		# Sets sums back to zero
 		sum_r_prev = sum_r
 		sum_A, sum_b, sum_r = np.zeros((8, 8), dtype=float), np.zeros((8, 1), dtype=float), 0.0
@@ -91,12 +209,16 @@ def calc_homography(pts_src, pts_tgt):
 			sum_A += A 
 			sum_b += b
 
-		# Calcs delta p and adds to p
-		dp = np.matmul(np.linalg.inv(sum_A), sum_b)
+		Calcs delta p and adds to p
+		lam = 0.0
+		dp = np.matmul(np.linalg.inv(sum_A + lam * np.diag(np.diag(sum_A))), sum_b)
 		p += dp
+		count += 1
+
+		'''
 
 	# Returns reshaped p as H matrix
-	print(f'Final residual: {sum_r}')
+	print(f'Final residual/iters: {sum_r}/{count}')
 	return np.append(p, 1).reshape((3, 3))
 
 def parse_config(config_path):
