@@ -127,6 +127,7 @@ def calc_homography(pts_src, pts_tgt, lam=0.0):
 
 	# Iterates until unchanging residual
 	while sum_r < sum_r_prev:
+		# '''
 		# Creates H matrix
 		H = np.append(p, 1).reshape((3,3))
 
@@ -167,6 +168,7 @@ def calc_homography(pts_src, pts_tgt, lam=0.0):
 		dp = np.matmul(np.linalg.inv(A + lam * np.diag(np.diag(A))), b)
 		p += dp
 		count += 1
+		# '''
 
 		'''
 		# CODE WITH FOR LOOP
