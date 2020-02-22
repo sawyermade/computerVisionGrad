@@ -88,7 +88,7 @@ def projection_transform(img_src, img_tgt, pts_src, pts_tgt, H):
 	# Returns new target img
 	return img_tgt
 
-def init_homography(pts_src, pts_tgt, lam=0.1):
+def init_homography(pts_src, pts_tgt, lam=0.0):
 	# Creates homogeneous coord matrices
 	XS = np.asarray(pts_src).T
 	XS = np.append(XS, [[1]*len(pts_src)], axis=0).astype(float)
@@ -118,7 +118,7 @@ def init_homography(pts_src, pts_tgt, lam=0.1):
 
 	return p, XS, XT
 
-def calc_homography(pts_src, pts_tgt, lam=0.1):
+def calc_homography(pts_src, pts_tgt, lam=0.0):
 	# Sets up initial p
 	p, XS, XT = init_homography(pts_src, pts_tgt, lam)
 	# p = np.vstack([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]) # Uncomment if for loop and comment out line above
