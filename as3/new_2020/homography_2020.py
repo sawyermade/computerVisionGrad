@@ -44,7 +44,7 @@ def projection_transform(img_src, img_tgt, pts_src, pts_tgt, H):
 	# Sets up shapely polygon for testing if inside space
 	poly_src, poly_tgt = Polygon(pts_src), Polygon(pts_tgt)
 
-	# Gets min/max x and y values for target polygon
+	# Gets min/max x and y values for target/source polygons
 	min_xt, min_yt = pts_tgt[0]
 	max_xt, max_yt = pts_tgt[0]
 	min_xs, min_ys = pts_src[0]
