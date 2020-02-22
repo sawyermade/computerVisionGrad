@@ -172,7 +172,7 @@ def calc_homography(pts_src, pts_tgt):
 		count += 1
 
 		'''
-		# CODE WITH FORLOOPS
+		# CODE WITH FOR LOOP
 
 		# Sets sums back to zero
 		sum_r_prev = sum_r
