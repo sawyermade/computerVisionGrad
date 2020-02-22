@@ -1,5 +1,6 @@
 import imageio, os, sys, numpy as np, tqdm, argparse
 from shapely.geometry import Point, Polygon
+# from numba import jit
 
 # P1 and P2 constants
 P1 = np.asarray([
@@ -113,7 +114,8 @@ def init_homography(pts_src, pts_tgt, lam=0.0):
 	b = np.matmul(J.T, DX)
 
 	# Calcs p vector
-	p = np.matmul(np.linalg.inv(A + lam * np.diag(np.diag(A))), b)
+	# p = np.matmul(np.linalg.inv(A + lam * np.diag(np.diag(A))), b)
+	p = np.matmul(np.linalg.inv(A), b)
 	p = np.append(p, np.vstack([0, 0]), axis=0)
 
 	return p, XS, XT
@@ -122,11 +124,12 @@ def calc_homography(pts_src, pts_tgt, lam=0.0):
 	# Sets up initial p
 	p, XS, XT = init_homography(pts_src, pts_tgt, lam)
 	# p = np.vstack([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]) # Uncomment if for loop and comment out line above
-	sum_r, sum_r_prev = 100000000000, 100000000001
+	sum_r, sum_r_prev = 9999999999999998, 9999999999999999
 	count = 0
+	precision = 0.0
 
 	# Iterates until unchanging residual
-	while sum_r < sum_r_prev:
+	while sum_r < sum_r_prev - precision:
 		# '''
 		# Creates H matrix
 		H = np.append(p, 1).reshape((3,3))
