@@ -1,6 +1,45 @@
 import imageio, os, sys, numpy as np, tqdm, argparse
 from shapely.geometry import Point, Polygon
 
+# P1 and P2 constants
+P1 = np.asarray([
+	[0, 0, 1, 0, 0, 0], 
+	[0, 0, 0, 1, 0, 0], 
+	[1, 0, 0, 0, 0, 0]
+])
+
+P2 = np.asarray([
+	[0, 0, 0, 0, 1, 0], 
+	[0, 0, 0, 0, 0, 1], 
+	[0, 1, 0, 0, 0, 0]
+])
+
+# P1T and P2T constants
+P1T = np.asarray([
+	[1, 0, 0, 0, 0, 0, 1, 0], 
+	[0, 1, 0, 0, 0, 0, 0, 1], 
+	[0, 0, 1, 0, 0, 0, 0, 0]
+])
+
+P2T = np.asarray([
+	[0, 0, 0, 1, 0, 0, 1, 0], 
+	[0, 0, 0, 0, 1, 0, 0, 1], 
+	[0, 0, 0, 0, 0, 1, 0, 0]
+])
+
+# PXE and PYE constants
+PXE = np.asarray([
+	[0, 0, 0, 0, 0, 0, -1.0, -1.0], 
+	[0, 0, 0, 0, 0, 0, 0, 0],
+	[1, 1, 1, 1, 1, 1, 0, 0]
+])
+
+PYE = np.asarray([
+	[0, 0, 0, 0, 0, 0, 0, 0], 
+	[0, 0, 0, 0, 0, 0, -1.0, -1.0],
+	[1, 1, 1, 1, 1, 1, 0, 0]
+])
+
 def projection_transform(img_src, img_tgt, pts_src, pts_tgt, H):
 	# Sets up shapely polygon for testing if inside space
 	poly_src, poly_tgt = Polygon(pts_src), Polygon(pts_tgt)
@@ -49,7 +88,7 @@ def projection_transform(img_src, img_tgt, pts_src, pts_tgt, H):
 	# Returns new target img
 	return img_tgt
 
-def init_homography(pts_src, pts_tgt):
+def init_homography(pts_src, pts_tgt, lam=0.1):
 	# Creates homogeneous coord matrices
 	XS = np.asarray(pts_src).T
 	XS = np.append(XS, [[1]*len(pts_src)], axis=0).astype(float)
@@ -61,19 +100,6 @@ def init_homography(pts_src, pts_tgt):
 	z_23 = np.asarray([[1, 0, 0], [0, 1, 0]])
 	DZ = np.matmul(z_23, XT - XS)
 	DX = np.append(np.vstack(DZ[0]), np.vstack(DZ[1]), axis=0)
-
-	# P1 and P2 constants
-	P1 = np.asarray([
-		[0, 0, 1, 0, 0, 0], 
-		[0, 0, 0, 1, 0, 0], 
-		[1, 0, 0, 0, 0, 0]
-	])
-
-	P2 = np.asarray([
-		[0, 0, 0, 0, 1, 0], 
-		[0, 0, 0, 0, 0, 1], 
-		[0, 1, 0, 0, 0, 0]
-	])
 
 	# Calcs jacobians
 	J1 = np.matmul(XT.T, P1)
@@ -87,24 +113,20 @@ def init_homography(pts_src, pts_tgt):
 	b = np.matmul(J.T, DX)
 
 	# Calcs p vector
-	lam = 0.0
 	p = np.matmul(np.linalg.inv(A + lam * np.diag(np.diag(A))), b)
 	p = np.append(p, np.vstack([0, 0]), axis=0)
 
 	return p, XS, XT
 
-def calc_homography(pts_src, pts_tgt):
+def calc_homography(pts_src, pts_tgt, lam=0.1):
 	# Sets up initial p
-	# p = np.vstack([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
-	p, XS, XT = init_homography(pts_src, pts_tgt)
-	sum_r, sum_r_prev = 100000000000, 1000000000001
+	p, XS, XT = init_homography(pts_src, pts_tgt, lam)
+	# p = np.vstack([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]) # Uncomment if for loop and comment out line above
+	sum_r, sum_r_prev = 100000000000, 100000000001
 	count = 0
 
-	# Iterates until low residual
+	# Iterates until unchanging residual
 	while sum_r < sum_r_prev:
-		# Sets sum_prev
-		sum_r_prev = sum_r
-
 		# Creates H matrix
 		H = np.append(p, 1).reshape((3,3))
 
@@ -117,31 +139,6 @@ def calc_homography(pts_src, pts_tgt):
 		z_23 = np.asarray([[1, 0, 0], [0, 1, 0]])
 		DZ = np.matmul(z_23, XS - XE)
 		DX = np.append(np.vstack(DZ[0]), np.vstack(DZ[1]), axis=0)
-
-		# P1 and P2 constants
-		P1T = np.asarray([
-			[1, 0, 0, 0, 0, 0, 1, 0], 
-			[0, 1, 0, 0, 0, 0, 0, 1], 
-			[0, 0, 1, 0, 0, 0, 0, 0]
-		])
-
-		P2T = np.asarray([
-			[0, 0, 0, 1, 0, 0, 1, 0], 
-			[0, 0, 0, 0, 1, 0, 0, 1], 
-			[0, 0, 0, 0, 0, 1, 0, 0]
-		])
-
-		PXE = np.asarray([
-			[0, 0, 0, 0, 0, 0, -1.0, -1.0], 
-			[0, 0, 0, 0, 0, 0, 0, 0],
-			[1, 1, 1, 1, 1, 1, 0, 0]
-		])
-
-		PYE = np.asarray([
-			[0, 0, 0, 0, 0, 0, 0, 0], 
-			[0, 0, 0, 0, 0, 0, -1.0, -1.0],
-			[1, 1, 1, 1, 1, 1, 0, 0]
-		])
 
 		# J1, XE 
 		J1 = np.matmul(XT.T, P1T)
@@ -162,11 +159,11 @@ def calc_homography(pts_src, pts_tgt):
 		# Calc B matrix
 		b = np.matmul(J.T, DX)
 
-		# Sets rsum
+		# Sets sum_r_prev and new sum_r
+		sum_r_prev = sum_r
 		sum_r = np.sum(DX**2)
 
 		# Calcs delta p vector
-		lam = 0.0
 		dp = np.matmul(np.linalg.inv(A + lam * np.diag(np.diag(A))), b)
 		p += dp
 		count += 1
@@ -209,8 +206,7 @@ def calc_homography(pts_src, pts_tgt):
 			sum_A += A 
 			sum_b += b
 
-		Calcs delta p and adds to p
-		lam = 0.0
+		# Calcs delta p and adds to p
 		dp = np.matmul(np.linalg.inv(sum_A + lam * np.diag(np.diag(sum_A))), sum_b)
 		p += dp
 		count += 1
@@ -218,6 +214,7 @@ def calc_homography(pts_src, pts_tgt):
 		'''
 
 	# Returns reshaped p as H matrix
+	print(f'Lambda: {lam}')
 	print(f'Final residual/iters: {sum_r}/{count}')
 	return np.append(p, 1).reshape((3, 3))
 
@@ -242,6 +239,7 @@ def parse_args():
 	parser.add_argument('-s', '--source', help='source config file path', type=str)
 	parser.add_argument('-t', '--target', help='target config file path', type=str)
 	parser.add_argument('-o', '--output', help='output file path', type=str)
+	parser.add_argument('-l', '--lam', help='lambda dampening value', type=float, default=0.0)
 	return parser.parse_args()
 
 def main():
@@ -253,7 +251,8 @@ def main():
 	img_tgt, pts_tgt = parse_config(args.target)
 
 	# Calcs homography matrix
-	H = calc_homography(pts_src, pts_tgt)
+	lam = args.lam
+	H = calc_homography(pts_src, pts_tgt, lam)
 
 	# Applies projection transformation
 	img_tgt = projection_transform(img_src, img_tgt, pts_src, pts_tgt, H)
