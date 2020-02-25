@@ -74,7 +74,7 @@ def projection_transform(img_src, img_tgt, pts_src, pts_tgt, H):
 			ppt = Point(j, i)
 			if ppt.within(poly_tgt):
 				# Calcs estimated source point
-				pt_e = np.matmul(H, np.vstack([j, i, 1]))
+				pt_e = H @ np.vstack([j, i, 1])
 				xs, ys = int(pt_e[0, 0] / pt_e[2, 0]), int(pt_e[1, 0] / pt_e[2, 0])
 
 				# Checks if estimated point is in source polygon and clamps if not
@@ -99,79 +99,79 @@ def init_homography(pts_src, pts_tgt):
 
 	# Calc delta Z and delta X
 	z_23 = np.asarray([[1, 0, 0], [0, 1, 0]])
-	DZ = np.matmul(z_23, XT - XS)
+	DZ = z_23 @ (XT - XS)
 	DX = np.append(np.vstack(DZ[0]), np.vstack(DZ[1]), axis=0)
 
 	# Calcs jacobians
-	J1 = np.matmul(XT.T, P1)
-	J2 = np.matmul(XT.T, P2)
+	J1 = XT.T @ P1 
+	J2 = XT.T @ P2 
 	J = np.vstack([J1, J2])
 
 	# Calcs A matrix
-	A = np.matmul(J.T, J)
+	A = J.T @ J
 
 	# Calcs b vector
-	b = np.matmul(J.T, DX)
+	b = J.T @ DX 
 
 	# Calcs p vector
-	p = np.matmul(np.linalg.inv(A), b)
+	p = np.linalg.inv(A) @ b
 	p = np.append(p, np.vstack([0, 0]), axis=0)
 
 	# Calcs residual
-	r = np.sum(DX**2)
+	r = (DX.T @ DX)[0, 0]
 
+	# Prints initial residual and returns
 	print(f'Initial residual: {r}')
-
 	return p, XS, XT, r
 
 def calc_homography(pts_src, pts_tgt, lam=0.0):
 	# Sets up initial p
-	p, XS, XT, sum_r_prev = init_homography(pts_src, pts_tgt)
-	sum_r, sum_r_prev = 9999999999999998, 9999999999999999
+	p, XS, XT, r_prev = init_homography(pts_src, pts_tgt)
+	r, r_prev = 9999999999999998, 9999999999999999
 	count = 0
 	precision = 0.0
 
 	# Iterates until unchanging residual
-	while sum_r < sum_r_prev - precision:
+	while r < r_prev - precision:
 		# '''
 		# Creates H matrix
 		H = np.append(p, 1).reshape((3,3))
 
 		# Creates estimated X matrix
-		XE = np.matmul(H, XT)
-		D = np.matmul(XE.T, np.vstack([0, 0, 1])).T
-		XE = XE / D
+		XE = H @ XT 
+		D = (XE.T @ np.vstack([0, 0, 1])).T
+		XE /= D
 
 		# Calc delta Z and delta X
 		z_23 = np.asarray([[1, 0, 0], [0, 1, 0]])
-		DZ = np.matmul(z_23, XS - XE)
+		DZ = z_23 @ (XS - XE)
 		DX = np.append(np.vstack(DZ[0]), np.vstack(DZ[1]), axis=0)
 
 		# J1, XE 
-		J1 = np.matmul(XT.T, P1T)
-		J1 *= np.matmul(XE.T, PXE)
+		J1 = XT.T @ P1T
+		J1 *= XE.T @ PXE 
 		J1 /= D.T
 
 		# J2, YE
-		J2 = np.matmul(XT.T, P2T)
-		J2 *= np.matmul(XE.T, PYE)
+		J2 = XT.T @ P2T
+		J2 *= XE.T @ PYE 
 		J2 /= D.T 
 
 		# Create Jacobian vstack
 		J = np.vstack([J1, J2])
 
 		# Calc A matrix
-		A = np.matmul(J.T, J)
+		A = J.T @ J
 
 		# Calc B matrix
-		b = np.matmul(J.T, DX)
+		b = J.T @ DX 
 
-		# Sets sum_r_prev and new sum_r
-		sum_r_prev = sum_r
-		sum_r = np.sum(DX**2)
+		# Sets r_prev and new r
+		r_prev = r
+		r = (DX.T @ DX)[0, 0]
 
 		# Calcs delta p vector
-		dp = np.matmul(np.linalg.inv(A + lam * np.diag(np.diag(A))), b)
+		dp = np.linalg.inv(A + lam * np.diag(np.diag(A))) @ b
 		p += dp
 		count += 1
 		# '''
@@ -180,8 +180,8 @@ def calc_homography(pts_src, pts_tgt, lam=0.0):
 		# CODE WITH FOR LOOP
 
 		# Sets sums back to zero
-		sum_r_prev = sum_r
-		sum_A, sum_b, sum_r = np.zeros((8, 8), dtype=float), np.zeros((8, 1), dtype=float), 0.0
+		r_prev = r
+		sum_A, sum_b, r = np.zeros((8, 8), dtype=float), np.zeros((8, 1), dtype=float), 0.0
 
 		# Goes through all the points
 		for pt_src, pt_tgt in zip(pts_src, pts_tgt):
@@ -197,8 +197,8 @@ def calc_homography(pts_src, pts_tgt, lam=0.0):
 			xe, ye, d = pt_e[0, 0] / pt_e[2, 0], pt_e[1, 0] / pt_e[2, 0], pt_e[2, 0]
 			
 			# Calcs residual
-			r = np.vstack([xs - xe, ys - ye])
-			sum_r += np.matmul(r.T, r)
+			r_vec = np.vstack([xs - xe, ys - ye])
+			r += np.matmul(r_vec.T, r_vec)
 
 			# Creates jacobian
 			J = np.asarray([
@@ -223,7 +223,7 @@ def calc_homography(pts_src, pts_tgt, lam=0.0):
 
 	# Returns reshaped p as H matrix
 	print(f'Lambda: {lam}')
-	print(f'Final residual/iters: {sum_r}/{count}')
+	print(f'Final residual/iters: {r}/{count}')
 	return np.append(p, 1).reshape((3, 3))
 
 def parse_config(config_path):
