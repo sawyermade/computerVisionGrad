@@ -235,7 +235,7 @@ def parse_config(config_path):
 		# Reads points
 		pts = []
 		for line in cf:
-			if line[0] == '#':
+			if line.strip()[0] == '#':
 				continue
 			x, y = line.rstrip().split()
 			pts.append((int(x), int(y)))
