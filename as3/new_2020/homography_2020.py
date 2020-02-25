@@ -127,7 +127,7 @@ def init_homography(pts_src, pts_tgt):
 def calc_homography(pts_src, pts_tgt, lam=0.0):
 	# Sets up initial p
 	p, XS, XT, r_prev = init_homography(pts_src, pts_tgt)
-	r, r_prev = 9999999999999998, 9999999999999999
+	r, r_prev = 999999999999999998, 999999999999999999
 	count = 0
 	precision = 0.0
 
