@@ -98,7 +98,10 @@ def init_homography(pts_src, pts_tgt):
 	XT = np.append(XT, [[1]*len(pts_tgt)], axis=0).astype(float)
 
 	# Calc delta Z and delta X
-	z_23 = np.asarray([[1, 0, 0], [0, 1, 0]])
+	z_23 = np.asarray([
+			[1, 0, 0], 
+			[0, 1, 0]
+	])
 	DZ = z_23 @ (XT - XS)
 	DX = np.append(np.vstack(DZ[0]), np.vstack(DZ[1]), axis=0)
 
@@ -143,7 +146,10 @@ def calc_homography(pts_src, pts_tgt, lam=0.0):
 		XE /= D
 
 		# Calc delta Z and delta X
-		z_23 = np.asarray([[1, 0, 0], [0, 1, 0]])
+		z_23 = np.asarray([
+			[1, 0, 0], 
+			[0, 1, 0]
+		])
 		DZ = z_23 @ (XS - XE)
 		DX = np.append(np.vstack(DZ[0]), np.vstack(DZ[1]), axis=0)
 
