@@ -41,6 +41,12 @@ PYE = np.asarray([
 	[1, 1, 1, 1, 1, 1, 0, 0]
 ])
 
+# DZ constant matrix
+z_23 = np.asarray([
+	[1, 0, 0], 
+	[0, 1, 0]
+])
+
 def projection_transform(img_src, img_tgt, pts_src, pts_tgt, H):
 	# Sets up shapely polygon for testing if inside space
 	poly_src, poly_tgt = Polygon(pts_src), Polygon(pts_tgt)
@@ -75,7 +81,9 @@ def projection_transform(img_src, img_tgt, pts_src, pts_tgt, H):
 			if ppt.within(poly_tgt):
 				# Calcs estimated source point
 				pt_e = H @ np.vstack([j, i, 1])
-				xs, ys = int(pt_e[0, 0] / pt_e[2, 0]), int(pt_e[1, 0] / pt_e[2, 0])
+				d = pt_e.T @ np.vstack([0, 0, 1])
+				xs = int(pt_e.T @ np.vstack([1, 0, 0]) / d)
+				ys = int(pt_e.T @ np.vstack([0, 1, 0]) / d)
 
 				# Checks if estimated point is in source polygon and clamps if not
 				if xs > max_xs: xs = max_xs
@@ -98,10 +106,6 @@ def init_homography(pts_src, pts_tgt):
 	XT = np.append(XT, [[1]*len(pts_tgt)], axis=0).astype(float)
 
 	# Calc delta Z and delta X
-	z_23 = np.asarray([
-			[1, 0, 0], 
-			[0, 1, 0]
-	])
 	DZ = z_23 @ (XT - XS)
 	DX = np.append(np.vstack(DZ[0]), np.vstack(DZ[1]), axis=0)
 
@@ -146,10 +150,6 @@ def calc_homography(pts_src, pts_tgt, lam=0.0):
 		XE /= D
 
 		# Calc delta Z and delta X
-		z_23 = np.asarray([
-			[1, 0, 0], 
-			[0, 1, 0]
-		])
 		DZ = z_23 @ (XS - XE)
 		DX = np.append(np.vstack(DZ[0]), np.vstack(DZ[1]), axis=0)
 
